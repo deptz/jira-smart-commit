@@ -3,8 +3,30 @@
   "displayName": "JIRA Smart Commit",
   "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
   "publisher": "triwibowo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deptz/jira-smart-commit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deptz/jira-smart-commit/issues"
+  },
+  "homepage": "https://github.com/deptz/jira-smart-commit#readme",
+  "keywords": [
+    "commit",
+    "jira",
+    "commit message",
+    "conventional commits",
+    "git",
+    "ai",
+    "openai",
+    "anthropic",
+    "gemini",
+    "scm",
+    "productivity"
+  ],
   "engines": {
     "vscode": "^1.92.0"
   },

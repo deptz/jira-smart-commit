@@ -1,6 +1,17 @@
 
 import fetch from 'node-fetch';
+import * as vscode from 'vscode';
 import { JiraIssue } from './types';
+
+// Shared output channel for logging
+let outputChannel: vscode.OutputChannel | undefined;
+
+export function getOutputChannel(): vscode.OutputChannel {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel('JIRA Smart Commit');
+  }
+  return outputChannel;
+}
 
 type Params = { key: string; baseUrl: string; email: string; apiToken: string; fetchRelatedIssues?: boolean };
 
@@ -10,12 +21,11 @@ export async function fetchIssue({ key, baseUrl, email, apiToken, fetchRelatedIs
   }
   
   // Debug logging
-  console.log('[JIRA Client] Fetching issue with config:', {
-    key,
-    baseUrl,
-    email: email.substring(0, 3) + '***', // Partial email for privacy
-    hasToken: !!apiToken
-  });
+  const logger = getOutputChannel();
+  logger.appendLine(`[JIRA Client] Fetching issue: ${key}`);
+  logger.appendLine(`  Base URL: ${baseUrl}`);
+  logger.appendLine(`  Email: ${email.substring(0, 3)}***`);
+  logger.appendLine(`  Has Token: ${!!apiToken}`);
   
   const authHeader = 'Basic ' + Buffer.from(`${email}:${apiToken}`).toString('base64');
   const normalizedBase = baseUrl.replace(/\/$/, '');
@@ -31,7 +41,7 @@ export async function fetchIssue({ key, baseUrl, email, apiToken, fetchRelatedIs
       : 'expand=renderedFields';
     const url = `${normalizedBase}/rest/api/${apiVersion}/issue/${encodeURIComponent(key)}?${expandParam}`;
     
-    console.log(`[JIRA Client] Attempting ${url}`);
+    getOutputChannel().appendLine(`[JIRA Client] Attempting API v${apiVersion}: ${url}`);
     
     let res;
     try {

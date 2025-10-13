@@ -1,7 +1,7 @@
 
 # Changelog
 
-## 0.2.0 (Unreleased)
+## 0.2.0 (2025-10-13)
 
 ### ✨ Features
 - **Full Conventional Commits 1.0.0 compliance** - Messages now strictly follow the official specification
