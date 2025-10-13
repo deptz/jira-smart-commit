@@ -210,12 +210,17 @@ jira-smart-commit/
      - `jiraSmartCommit.ai.model = gpt-4o-mini` (for OpenAI) or respective model/deployment
    - On first AI call, you'll be prompted for the provider API key → stored securely.
 
-4. **Run the extension**
-   - Press **F5** (Run → Start Debugging) to launch the Extension Host.
-   - In a Git repo with staged changes, run Command Palette:
-     - `JIRA Smart Commit: Generate` (preview)
-     - `JIRA Smart Commit: Insert into Git Input`
-     - `JIRA Smart Commit: Commit Now`
+4. **Use the extension**
+   - Stage your changes in Git (`git add` or use VS Code Source Control)
+   - Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
+   - Run one of these commands:
+     - `JIRA Smart Commit: Generate` — Preview the commit message
+     - `JIRA Smart Commit: Insert into Git Input` — Insert into SCM input box
+     - `JIRA Smart Commit: Commit Now` — Generate and commit immediately
+
+**Tip:** You can also access commands via:
+- Status bar item (bottom left) — Click the "JIRA: KEY-123" button
+- Command Palette (`Cmd+Shift+P`) — Type "JIRA Smart Commit"
 
 ## ⚙️ Settings Reference (highlights)
 

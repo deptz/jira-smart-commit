@@ -30,9 +30,6 @@
   "engines": {
     "vscode": "^1.92.0"
   },
-  "enabledApiProposals": [
-    "contribSourceControlInputBoxMenu"
-  ],
   "categories": [
     "SCM Providers"
   ],
@@ -323,22 +320,6 @@
           "description": "Language for the final message (e.g., 'en', 'id')."
         }
       }
-    },
-    "menus": {
-      "scm/inputBox": [
-        {
-          "command": "jiraSmartCommit.generate",
-          "group": "navigation@1"
-        },
-        {
-          "command": "jiraSmartCommit.insert",
-          "group": "navigation@2"
-        },
-        {
-          "command": "jiraSmartCommit.commit",
-          "group": "navigation@3"
-        }
-      ]
     }
   },
   "scripts": {
