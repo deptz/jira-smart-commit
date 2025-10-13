@@ -1,0 +1,9 @@
+
+**/*.map
+**/*.ts
+**/*.test.*
+.vscode/**
+test/**
+.github/**
+.gitignore
+.DS_Store

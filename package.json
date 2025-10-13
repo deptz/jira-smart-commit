@@ -1,0 +1,338 @@
+{
+  "name": "jira-smart-commit",
+  "displayName": "JIRA Smart Commit",
+  "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
+  "publisher": "triwibowo",
+  "version": "0.1.0",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "enabledApiProposals": [
+    "contribSourceControlInputBoxMenu"
+  ],
+  "categories": [
+    "SCM Providers"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jiraSmartCommit.generate",
+        "title": "JIRA Smart Commit: Generate"
+      },
+      {
+        "command": "jiraSmartCommit.insert",
+        "title": "JIRA Smart Commit: Insert into Git Input"
+      },
+      {
+        "command": "jiraSmartCommit.commit",
+        "title": "JIRA Smart Commit: Commit Now"
+      },
+      {
+        "command": "jiraSmartCommit.resetApiKey",
+        "title": "JIRA Smart Commit: Reset AI API Key"
+      },
+      {
+        "command": "jiraSmartCommit.setApiKey",
+        "title": "JIRA Smart Commit: Set AI API Key (Settings)"
+      },
+      {
+        "command": "jiraSmartCommit.resetJiraApiToken",
+        "title": "JIRA Smart Commit: Reset JIRA API Token"
+      }
+    ],
+    "configuration": {
+      "title": "JIRA Smart Commit",
+      "properties": {
+        "jiraSmartCommit.baseUrl": {
+          "type": "string",
+          "markdownDescription": "Base URL of your JIRA Cloud/Server instance (e.g. `https://your.atlassian.net`)."
+        },
+        "jiraSmartCommit.email": {
+          "type": "string",
+          "markdownDescription": "JIRA account email used with API token."
+        },
+        "jiraSmartCommit.branchPattern": {
+          "type": "string",
+          "default": "(?<key>[A-Z][A-Z0-9]+-\\d+)",
+          "markdownDescription": "Regex with `(?<key>...)` capturing the JIRA key from branch name."
+        },
+        "jiraSmartCommit.enableConventionalCommits": {
+          "type": "boolean",
+          "default": true,
+          "description": "Emit Conventional Commit type/scope."
+        },
+        "jiraSmartCommit.commitTemplate": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Custom template. Placeholders: `${type}`, `${scope}`, `${jira.summary}`, `${jira.oneLineDescription}`, `${jira.acceptanceBullets}`, `${jira.key}`, `${jira.relatedKeysFooter}`, `${changes.bullets}`."
+        },
+        "jiraSmartCommit.commitDirectly": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, generate and commit immediately (skips preview)."
+        },
+        "jiraSmartCommit.scopeStrategy": {
+          "type": "string",
+          "enum": [
+            "packageJson",
+            "folder",
+            "auto",
+            "none"
+          ],
+          "enumDescriptions": [
+            "Use package.json (Node.js), go.mod (Go), or folder name as fallback",
+            "Use workspace folder name",
+            "Auto-detect from changed files (Go modules, Rails resources, Clean Architecture layers)",
+            "No scope"
+          ],
+          "default": "packageJson",
+          "markdownDescription": "How to infer commit scope. **auto** is recommended for Go, Rails, and Clean Architecture projects."
+        },
+        "jiraSmartCommit.detectBreakingChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Add BREAKING hints when migrations or deletions detected."
+        },
+        "jiraSmartCommit.fetchRelatedIssues": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Fetch related JIRA issues (subtasks, linked issues, parent) from JIRA API. When disabled, only the branch JIRA key will be used."
+        },
+        "jiraSmartCommit.relatedIssuesInFooter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Append related issue keys in Refs footer (only applies if fetchRelatedIssues is enabled)."
+        },
+        "jiraSmartCommit.includeJiraDetailsInBody": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Include JIRA description and acceptance criteria in the commit body. When disabled (default), only the summary and file changes are included for cleaner Conventional Commits."
+        },
+        "jiraSmartCommit.descriptionMaxLength": {
+          "type": "number",
+          "default": 0,
+          "markdownDescription": "Maximum characters from JIRA description to include (0 = unlimited, let token budget decide)."
+        },
+        "jiraSmartCommit.smartTruncation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Break truncated text at sentence/paragraph boundaries instead of mid-word."
+        },
+        "jiraSmartCommit.tokenAllocationStrategy": {
+          "type": "string",
+          "enum": [
+            "balanced",
+            "prefer-description",
+            "prefer-diff"
+          ],
+          "default": "balanced",
+          "markdownDescription": "How to allocate tokens between JIRA description and code diff. **balanced**: 40% description, 60% diff. **prefer-description**: up to 70% for description. **prefer-diff**: up to 70% for diff."
+        },
+        "jiraSmartCommit.includeCommitHistory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include previous commits for the same JIRA ticket to provide context and avoid repetition."
+        },
+        "jiraSmartCommit.commitHistoryLimit": {
+          "type": "number",
+          "default": 5,
+          "markdownDescription": "Maximum number of previous commits to include (default: 5, max: 10)."
+        },
+        "jiraSmartCommit.jiraKeyPosition": {
+          "type": "string",
+          "enum": [
+            "footer",
+            "subject-prefix",
+            "subject-suffix"
+          ],
+          "default": "footer",
+          "markdownDescription": "Where to place JIRA key in commit message. **footer**: `Refs: JIRA-123` (recommended). **subject-prefix**: `JIRA-123 feat(scope): message`. **subject-suffix**: `feat(scope): message [JIRA-123]`."
+        },
+        "jiraSmartCommit.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI polishing/synthesis of the generated commit message."
+        },
+        "jiraSmartCommit.ai.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "azure-openai",
+            "anthropic",
+            "gemini",
+            "ollama"
+          ],
+          "default": "openai",
+          "description": "LLM provider to use."
+        },
+        "jiraSmartCommit.ai.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "markdownDescription": "Model or deployment name. See examples below.",
+          "enum": [
+            "o1",
+            "o3",
+            "o3-mini",
+            "o4-mini",
+            "gpt-5",
+            "gpt-5-mini",
+            "gpt-5-turbo",
+            "gpt-4.1",
+            "gpt-4.1-mini",
+            "gpt-4.1-nano",
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-4-turbo",
+            "gpt-3.5-turbo",
+            "claude-sonnet-4-5",
+            "claude-opus-4-1-20250805",
+            "claude-opus-4-1",
+            "claude-opus-4-20250514",
+            "claude-opus-4-0",
+            "claude-sonnet-4-20250514",
+            "claude-sonnet-4-0",
+            "claude-3-7-sonnet-20250219",
+            "claude-3-7-sonnet-latest",
+            "claude-3.5-sonnet",
+            "claude-3.5-haiku",
+            "claude-3-opus",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+            "llama3.1:8b",
+            "llama3.1:70b",
+            "llama3.2:1b",
+            "llama3.2:3b",
+            "codellama:7b",
+            "mistral:7b",
+            "custom"
+          ],
+          "markdownEnumDescriptions": [
+            "OpenAI o1 (Reasoning model)",
+            "OpenAI o3 (Reasoning model)",
+            "OpenAI o3-mini (Reasoning model)",
+            "OpenAI o4-mini (Reasoning model)",
+            "OpenAI GPT-5",
+            "OpenAI GPT-5 Mini",
+            "OpenAI GPT-5 Turbo",
+            "OpenAI GPT-4.1",
+            "OpenAI GPT-4.1 Mini",
+            "OpenAI GPT-4.1 Nano",
+            "OpenAI GPT-4o",
+            "OpenAI GPT-4o Mini (fast & cheap)",
+            "OpenAI GPT-4 Turbo",
+            "OpenAI GPT-3.5 Turbo (legacy)",
+            "Anthropic Claude Sonnet 4.5",
+            "Anthropic Claude Opus 4.1 (20250805)",
+            "Anthropic Claude Opus 4.1",
+            "Anthropic Claude Opus 4 (20250514)",
+            "Anthropic Claude Opus 4.0",
+            "Anthropic Claude Sonnet 4 (20250514)",
+            "Anthropic Claude Sonnet 4.0",
+            "Anthropic Claude 3.7 Sonnet (20250219)",
+            "Anthropic Claude 3.7 Sonnet (latest)",
+            "Anthropic Claude 3.5 Sonnet",
+            "Anthropic Claude 3.5 Haiku (fast & cheap)",
+            "Anthropic Claude 3 Opus",
+            "Google Gemini 2.5 Pro",
+            "Google Gemini 2.5 Flash",
+            "Google Gemini 2.5 Flash Lite",
+            "Google Gemini 2.0 Flash",
+            "Google Gemini 2.0 Flash Lite",
+            "Google Gemini 1.5 Pro",
+            "Google Gemini 1.5 Flash",
+            "Ollama Llama 3.1 8B",
+            "Ollama Llama 3.1 70B",
+            "Ollama Llama 3.2 1B",
+            "Ollama Llama 3.2 3B",
+            "Ollama CodeLlama 7B",
+            "Ollama Mistral 7B",
+            "Custom model name (for Azure deployments or other providers)"
+          ]
+        },
+        "jiraSmartCommit.ai.baseUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional custom base URL (Azure/OpenAI-compatible proxy or Ollama, e.g., `http://localhost:11434`)."
+        },
+        "jiraSmartCommit.ai.maxTokens": {
+          "type": "number",
+          "default": 256,
+          "description": "Upper bound on tokens in completion."
+        },
+        "jiraSmartCommit.ai.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Lower = more deterministic."
+        },
+        "jiraSmartCommit.ai.systemPrompt": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "System prompt override used to constrain style."
+        },
+        "jiraSmartCommit.ai.userPromptTemplate": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "User template with variables: ${format}, ${lang}, ${type}, ${scope}, ${breaking}, ${jira.key}, ${jira.summary}, ${jira.oneLineDescription}, ${jira.acceptanceBullets}, ${jira.relatedKeysFooter}, ${changes.bullets}."
+        },
+        "jiraSmartCommit.ai.format": {
+          "type": "string",
+          "enum": [
+            "conventional",
+            "plain"
+          ],
+          "default": "conventional",
+          "description": "Output format guardrail."
+        },
+        "jiraSmartCommit.ai.language": {
+          "type": "string",
+          "default": "en",
+          "description": "Language for the final message (e.g., 'en', 'id')."
+        }
+      }
+    },
+    "menus": {
+      "scm/inputBox": [
+        {
+          "command": "jiraSmartCommit.generate",
+          "group": "navigation@1"
+        },
+        {
+          "command": "jiraSmartCommit.insert",
+          "group": "navigation@2"
+        },
+        {
+          "command": "jiraSmartCommit.commit",
+          "group": "navigation@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "echo \"(placeholder) add tests in ./test\" && exit 0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@types/node-fetch": "^2.6.4",
+    "@types/vscode": "^1.92.0",
+    "@vscode/test-electron": "^2.4.1",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
