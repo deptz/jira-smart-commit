@@ -214,9 +214,17 @@ jira-smart-commit/
    - Stage your changes in Git (`git add` or use VS Code Source Control)
    - Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
    - Run one of these commands:
-     - `JIRA Smart Commit: Generate` — Preview the commit message
+     - `JIRA Smart Commit: Generate` — Preview the commit message in editor
      - `JIRA Smart Commit: Insert into Git Input` — Insert into SCM input box
-     - `JIRA Smart Commit: Commit Now` — Generate and commit immediately
+     - `JIRA Smart Commit: Commit Now` — Generate with preview dialog, then commit
+
+**Commit Now Workflow:**
+1. Run "JIRA Smart Commit: Commit Now"
+2. Review the message in a modal dialog
+3. Choose your action:
+   - **Commit Now** — Proceed with commit immediately
+   - **Edit in Git Input** — Insert to Git box for manual editing
+   - **Cancel** — Abort the operation
 
 **Tip:** You can also access commands via:
 - Status bar item (bottom left) — Click the "JIRA: KEY-123" button

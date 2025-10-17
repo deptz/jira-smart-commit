@@ -1,6 +1,38 @@
 
 # Changelog
 
+## 0.2.1 (2025-10-18)
+
+### ✨ Features
+- **Commit Preview Modal** - Added modal dialog to "Commit Now" command for safety
+  - Users can now review commit messages before committing
+  - Three options: "Commit Now", "Edit in Git Input", or "Cancel"
+  - Prevents accidental commits with wrong messages
+  - Non-breaking change - other commands work as before
+
+### 🤖 AI Models
+- **Added Claude Haiku 4.5 support** - Latest fast and cost-effective Anthropic model
+  - Fast response times for quick commit generation
+  - Lower cost compared to Sonnet/Opus models
+  - Available in AI model selection dropdown
+
+### 🔧 Improvements
+- Replaced console.log with VS Code Output Channel for professional logging
+  - Logs now appear in dedicated "JIRA Smart Commit" output channel
+  - Users can view/hide logs via Output panel
+  - Better debugging experience for troubleshooting
+
+### 📦 Publishing
+- Removed proposed API usage (`contribSourceControlInputBoxMenu`) for marketplace compliance
+- Extension now publishable to VS Code Marketplace
+- Added MIT License and complete repository metadata
+- Added extension icon and keywords for better discoverability
+
+### 📚 Documentation
+- Updated README with commit preview workflow
+- Added implementation plan document (IMPLEMENTATION_PLAN_COMMIT_PREVIEW.md)
+- Improved command usage instructions
+
 ## 0.2.0 (2025-10-13)
 
 ### ✨ Features

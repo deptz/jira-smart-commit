@@ -357,12 +357,44 @@ async function insertCommand(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('Commit message inserted.');
 }
 
-// Command: Generate + Commit
+// Command: Generate + Commit (with preview)
 async function commitCommand(context: vscode.ExtensionContext) {
+  // Generate the commit message
   const message = await generate(context);
-  await writeToGitBox(message);
-  await doCommit();
-  vscode.window.showInformationMessage('Committed with JIRA Smart Commit.');
+  
+  // Show modal dialog with message preview
+  const action = await vscode.window.showInformationMessage(
+    'Ready to commit with this message?',
+    { 
+      modal: true,          // Makes it a blocking modal dialog
+      detail: message       // Shows the full commit message
+    },
+    'Commit Now',           // Button 1
+    'Edit in Git Input',    // Button 2
+    'Cancel'                // Button 3 (or user can close dialog)
+  );
+
+  // Handle user's choice
+  switch (action) {
+    case 'Commit Now':
+      // Insert message and commit immediately
+      await writeToGitBox(message);
+      await doCommit();
+      vscode.window.showInformationMessage('✓ Changes committed successfully!');
+      break;
+      
+    case 'Edit in Git Input':
+      // Insert message into Git input box for review
+      await writeToGitBox(message);
+      vscode.window.showInformationMessage('✓ Message inserted into Git input box. Review and commit when ready.');
+      break;
+      
+    case 'Cancel':
+    case undefined:  // User closed the dialog
+      // Do nothing - operation cancelled
+      vscode.window.showInformationMessage('Commit cancelled.');
+      break;
+  }
 }
 
 async function writeToGitBox(message: string) {
