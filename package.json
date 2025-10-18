@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
   "publisher": "triwibowo",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -62,6 +62,11 @@
       {
         "command": "jiraSmartCommit.resetJiraApiToken",
         "title": "JIRA Smart Commit: Reset JIRA API Token"
+      },
+      {
+        "command": "jiraSmartCommit.generatePRDescription",
+        "title": "JIRA Smart Commit: Generate PR Description",
+        "icon": "$(git-pull-request)"
       }
     ],
     "configuration": {
@@ -320,6 +325,113 @@
           "type": "string",
           "default": "en",
           "description": "Language for the final message (e.g., 'en', 'id')."
+        },
+        "jiraSmartCommit.pr.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable PR Description Generator feature."
+        },
+        "jiraSmartCommit.pr.branchPatternPreset": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "feature-based",
+            "user-based",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Flexible pattern that searches anywhere in branch name (ABC-123)",
+            "Git-flow style with feature/bugfix/hotfix prefixes (feature/ABC-123-description)",
+            "User forks with JIRA keys (username/ABC-123-description)",
+            "Custom regex patterns (configure customBranchPatterns)"
+          ],
+          "default": "standard",
+          "markdownDescription": "Branch naming pattern preset for extracting JIRA keys."
+        },
+        "jiraSmartCommit.pr.customBranchPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Custom regex patterns with capture groups for JIRA key extraction. Example: `^release/([A-Z]+-\\d+)`. Only used when preset is 'custom'."
+        },
+        "jiraSmartCommit.pr.defaultBaseBranches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "main",
+            "master",
+            "develop"
+          ],
+          "markdownDescription": "Default base branches to compare against when generating PR descriptions."
+        },
+        "jiraSmartCommit.pr.includeTestInstructions": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Include language-specific test instructions in PR description (Rails/Go)."
+        },
+        "jiraSmartCommit.pr.includeCoverage": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Include test coverage information if available (SimpleCov/go test)."
+        },
+        "jiraSmartCommit.pr.minScore": {
+          "type": "number",
+          "default": 85,
+          "minimum": 0,
+          "maximum": 100,
+          "markdownDescription": "Minimum quality score required for PR description (0-100). Score is calculated based on mandatory sections and content quality."
+        },
+        "jiraSmartCommit.pr.targetPlatform": {
+          "type": "string",
+          "enum": [
+            "bitbucket",
+            "github",
+            "gitlab"
+          ],
+          "default": "bitbucket",
+          "markdownDescription": "Target platform for PR description formatting. Bitbucket format is default."
+        },
+        "jiraSmartCommit.pr.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable AI enhancement for PR descriptions. Uses existing AI provider configuration (jiraSmartCommit.ai.*)."
+        },
+        "jiraSmartCommit.pr.ai.enhanceLevel": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "balanced",
+            "detailed"
+          ],
+          "enumDescriptions": [
+            "Minimal: Fix grammar and spelling only, minimal rewording",
+            "Balanced: Improve clarity and flow, add helpful context (recommended)",
+            "Detailed: Comprehensive explanations with architectural context"
+          ],
+          "default": "balanced",
+          "markdownDescription": "Level of AI enhancement to apply to PR descriptions."
+        },
+        "jiraSmartCommit.pr.ai.provider": {
+          "type": "string",
+          "enum": [
+            "",
+            "openai",
+            "azure-openai",
+            "anthropic",
+            "gemini",
+            "ollama"
+          ],
+          "default": "",
+          "markdownDescription": "AI provider override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.provider."
+        },
+        "jiraSmartCommit.pr.ai.model": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Model override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.model. Higher-quality models (GPT-4, Claude Sonnet) recommended for better PR descriptions."
         }
       }
     }

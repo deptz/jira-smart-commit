@@ -10,12 +10,16 @@ import { JiraIssue } from './types';
 import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
 import { resetApiKey, setApiKeyViaSettings } from './aiKeyManager';
+import { generatePRDescriptionCommand } from './commands/generatePRDescription';
 
 const exec = promisify(cpExec);
 
 let statusBar: vscode.StatusBarItem;
 
 export async function activate(context: vscode.ExtensionContext) {
+  // Store context globally for PR generator to access secrets
+  (global as any).extensionContext = context;
+  
   statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusBar.text = 'JIRA: …';
   statusBar.command = 'jiraSmartCommit.generate';
@@ -28,7 +32,8 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.commit', () => withHandledErrors(commitCommand(context))),
     vscode.commands.registerCommand('jiraSmartCommit.resetApiKey', () => withHandledErrors(resetApiKey(context))),
     vscode.commands.registerCommand('jiraSmartCommit.setApiKey', () => withHandledErrors(setApiKeyViaSettings())),
-    vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context)))
+    vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context))),
+    vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand()))
   );
 
   // On activation, try to update status bar with detected key

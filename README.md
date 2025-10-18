@@ -154,13 +154,28 @@ $ git add infrastructure/repository/user_repo.go
 
 
 ## ✨ Features
-- Detect JIRA key from branch name (configurable regex) or prompt.
-- Fetch JIRA issue (summary, description, subtasks/links/parent).
-- Analyze staged changes to infer type/scope and produce concise bullets.
-- Composable commit template and **AI post-processing** (OpenAI, Anthropic, Gemini, Ollama).
-- Status Bar integration and one-click `Generate → Preview → Commit` flow.
-- **SecretStorage** for API keys — no plaintext in settings.
-- Offline fallback if JIRA is unreachable (uses diff-only).
+
+### Commit Message Generation
+- Detect JIRA key from branch name (configurable regex) or prompt
+- Fetch JIRA issue (summary, description, subtasks/links/parent)
+- Analyze staged changes to infer type/scope and produce concise bullets
+- Composable commit template and **AI post-processing** (OpenAI, Anthropic, Gemini, Ollama)
+- Status Bar integration and one-click `Generate → Preview → Commit` flow
+- Offline fallback if JIRA is unreachable (uses diff-only)
+
+### PR Description Generation (NEW in v0.3.0) 🚀
+- **5 mandatory sections** with quality scoring (0-100 points, A-F grades)
+- **AI enhancement** with 3 levels (minimal/balanced/detailed)
+- **Multi-platform support** (Bitbucket, GitHub, GitLab)
+- **Smart analysis** (language detection, coverage detection, commit parsing)
+- **JIRA integration** (auto-extracts acceptance criteria, issue context)
+- **Quality validation** with improvement suggestions
+- **Platform-specific formatting** with PR title suggestions
+
+### Security & Reliability
+- **SecretStorage** for API keys — no plaintext in settings
+- **Graceful fallback** - works without AI or JIRA
+- **Multi-level error handling** ensures generation always succeeds
 
 ## 🧩 Folder Structure
 ```
@@ -173,13 +188,26 @@ jira-smart-commit/
 │  ├─ types.ts
 │  ├─ utils.ts
 │  ├─ aiKeyManager.ts
-│  └─ ai/
-│     ├─ aiProvider.ts
-│     ├─ index.ts
-│     ├─ openaiProvider.ts
-│     ├─ anthropicProvider.ts
-│     ├─ geminiProvider.ts
-│     └─ ollamaProvider.ts
+│  ├─ ai/
+│  │  ├─ aiProvider.ts
+│  │  ├─ index.ts
+│  │  ├─ openaiProvider.ts
+│  │  ├─ anthropicProvider.ts
+│  │  ├─ geminiProvider.ts
+│  │  └─ ollamaProvider.ts
+│  ├─ pr/                         # NEW: PR Description Generator
+│  │  ├─ commitAnalyzer.ts       # Analyze conventional commits
+│  │  ├─ sectionGenerator.ts     # Generate 5 mandatory sections
+│  │  ├─ scoreCalculator.ts      # Quality scoring (0-100)
+│  │  ├─ prValidator.ts          # Validation & quality checks
+│  │  ├─ prFormatter.ts          # Multi-platform formatting
+│  │  ├─ prGenerator.ts          # Main orchestrator
+│  │  ├─ aiPREnhancer.ts         # AI enhancement integration
+│  │  ├─ languageDetector.ts     # Language/framework detection
+│  │  ├─ coverageDetector.ts     # Test coverage analysis
+│  │  └─ jiraExtractor.ts        # JIRA data extraction
+│  └─ commands/
+│     └─ generatePRDescription.ts # PR command handler
 ├─ media/preview.css
 ├─ package.json
 ├─ tsconfig.json
@@ -214,9 +242,14 @@ jira-smart-commit/
    - Stage your changes in Git (`git add` or use VS Code Source Control)
    - Open Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`)
    - Run one of these commands:
+   
+   **For Commit Messages:**
      - `JIRA Smart Commit: Generate` — Preview the commit message in editor
      - `JIRA Smart Commit: Insert into Git Input` — Insert into SCM input box
      - `JIRA Smart Commit: Commit Now` — Generate with preview dialog, then commit
+   
+   **For PR Descriptions:** 🆕
+     - `JIRA Smart Commit: Generate PR Description` — Generate comprehensive PR description
 
 **Commit Now Workflow:**
 1. Run "JIRA Smart Commit: Commit Now"
@@ -562,10 +595,13 @@ User clicks Cancel
 ---
 
 ## 🛣️ Roadmap / Ideas
-- PR body generator
+- ✅ PR description generator (✨ Completed in v0.3.0!)
+- ✅ AI enhancement for PR descriptions (✨ Completed in v0.3.0!)
 - JIRA Smart Commits (transition/commands)
 - More robust breaking-change detection
 - Inline code diff heuristics
+- Custom PR section templates
+- Historical PR analysis for insights
 
 ---
 
