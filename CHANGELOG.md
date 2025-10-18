@@ -9,12 +9,22 @@
   - Three options: "Commit Now", "Edit in Git Input", or "Cancel"
   - Prevents accidental commits with wrong messages
   - Non-breaking change - other commands work as before
+- **Progress Indicators** - Added status bar progress notifications during commit message generation
+  - Shows detailed steps: fetching JIRA, analyzing changes, calling AI, finalizing
+  - Visual feedback with progress percentage
+  - Users now know when the extension is actively working
 
 ### 🤖 AI Models
 - **Added Claude Haiku 4.5 support** - Latest fast and cost-effective Anthropic model
   - Fast response times for quick commit generation
   - Lower cost compared to Sonnet/Opus models
   - Available in AI model selection dropdown
+
+### 🐛 Bug Fixes
+- **Fixed OpenAI API compatibility** - Updated to use `max_completion_tokens` parameter
+  - Resolves "Unsupported parameter: 'max_tokens'" error with newer OpenAI models
+  - Now compatible with GPT-4, GPT-4 Turbo, GPT-4o, and other current models
+  - Aligns with OpenAI's latest API specification
 
 ### 🔧 Improvements
 - Replaced console.log with VS Code Output Channel for professional logging

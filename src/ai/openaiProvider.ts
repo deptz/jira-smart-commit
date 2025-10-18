@@ -18,7 +18,7 @@ export class OpenAIClient implements AiClient {
       body: JSON.stringify({
         model: this.cfg.model,
         temperature: this.cfg.temperature,
-        max_tokens: this.cfg.maxTokens,
+        max_completion_tokens: this.cfg.maxTokens,
         messages: [
           { role: 'system', content: p.system },
           { role: 'user', content: p.user }

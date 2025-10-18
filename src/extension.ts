@@ -135,7 +135,7 @@ function appendJiraKeyToMessage(message: string, issue: JiraIssue, cfg: Config):
   }
 }
 
-async function generate(context: vscode.ExtensionContext): Promise<string> {
+async function generate(context: vscode.ExtensionContext, progress?: vscode.Progress<{ message?: string; increment?: number }>): Promise<string> {
   const cfg = getConfig();
   const key = await pickOrDetectJiraKey();
   if (!key) throw new Error('No JIRA key provided.');
@@ -148,6 +148,7 @@ async function generate(context: vscode.ExtensionContext): Promise<string> {
   // Try fetching JIRA; if fails, proceed with diff-only
   let issue: JiraIssue | undefined;
   try {
+    progress?.report({ message: 'Fetching JIRA issue...', increment: 10 });
     issue = await fetchIssue({ 
       key, 
       baseUrl: cfg.baseUrl, 
@@ -161,6 +162,7 @@ async function generate(context: vscode.ExtensionContext): Promise<string> {
   }
 
   // Analyze staged changes
+  progress?.report({ message: 'Analyzing staged changes...', increment: 20 });
   const diff: DiffSummary = await analyzeStaged(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 
   // Guess type & scope
@@ -180,6 +182,8 @@ async function generate(context: vscode.ExtensionContext): Promise<string> {
   const aiEnabled = vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<boolean>('enabled', false);
   if (!aiEnabled) return baseline;
 
+  progress?.report({ message: 'Preparing AI request...', increment: 10 });
+  
   const aiCfg: AIConfig = {
     provider: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<any>('provider', 'openai'),
     model: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('model', 'gpt-4o-mini')!,
@@ -312,9 +316,12 @@ ${stagedChangesText}`;
   }) : defaultUser;
 
   try {
+    progress?.report({ message: `Calling ${aiCfg.provider} AI (${aiCfg.model})...`, increment: 40 });
     const client = await getAiClient(context, aiCfg);
     let aiOut = await callAI(client, { system, user });
     aiOut = aiOut.trim();
+    
+    progress?.report({ message: 'Finalizing commit message...', increment: 20 });
     
     // Hardcode the Refs footer to prevent AI hallucination
     if (aiOut && issue?.key) {
@@ -337,7 +344,13 @@ ${stagedChangesText}`;
 // Command: Generate + Preview
 async function generateCommand(context: vscode.ExtensionContext) {
   const cfg = getConfig();
-  const message = await generate(context);
+  const message = await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Generating commit message...",
+    cancellable: false
+  }, async (progress) => {
+    return await generate(context, progress);
+  });
 
   if (cfg.commitDirectly) {
     await writeToGitBox(message);
@@ -352,7 +365,13 @@ async function generateCommand(context: vscode.ExtensionContext) {
 
 // Command: Generate + Insert
 async function insertCommand(context: vscode.ExtensionContext) {
-  const message = await generate(context);
+  const message = await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Generating commit message...",
+    cancellable: false
+  }, async (progress) => {
+    return await generate(context, progress);
+  });
   await writeToGitBox(message);
   vscode.window.showInformationMessage('Commit message inserted.');
 }
@@ -360,7 +379,13 @@ async function insertCommand(context: vscode.ExtensionContext) {
 // Command: Generate + Commit (with preview)
 async function commitCommand(context: vscode.ExtensionContext) {
   // Generate the commit message
-  const message = await generate(context);
+  const message = await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Generating commit message...",
+    cancellable: false
+  }, async (progress) => {
+    return await generate(context, progress);
+  });
   
   // Show modal dialog with message preview
   const action = await vscode.window.showInformationMessage(
@@ -370,8 +395,7 @@ async function commitCommand(context: vscode.ExtensionContext) {
       detail: message       // Shows the full commit message
     },
     'Commit Now',           // Button 1
-    'Edit in Git Input',    // Button 2
-    'Cancel'                // Button 3 (or user can close dialog)
+    'Edit in Git Input'     // Button 2 (user can close dialog to cancel)
   );
 
   // Handle user's choice
@@ -389,8 +413,7 @@ async function commitCommand(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage('✓ Message inserted into Git input box. Review and commit when ready.');
       break;
       
-    case 'Cancel':
-    case undefined:  // User closed the dialog
+    case undefined:  // User closed the dialog or clicked Cancel
       // Do nothing - operation cancelled
       vscode.window.showInformationMessage('Commit cancelled.');
       break;
