@@ -1,45 +1,26 @@
 import * as vscode from 'vscode';
 import { CommitInfo, FileChange } from './types';
 import { getBranchPatterns } from './configPresets';
+import { getGitAPI, pickRepository, RepositoryInfo } from '../utils';
 
 /**
- * Get the Git extension API
+ * Get the active Git repository for PR operations
+ * @returns Repository info or throws error if none found
  */
-function getGitExtension(): any {
-  const extension = vscode.extensions.getExtension('vscode.git');
-  if (!extension) {
-    throw new Error('Git extension not found');
+export async function getRepository(): Promise<RepositoryInfo> {
+  const repoInfo = await pickRepository();
+  if (!repoInfo) {
+    throw new Error('No Git repository found or selected');
   }
-  
-  if (!extension.isActive) {
-    throw new Error('Git extension not active');
-  }
-  
-  return extension.exports.getAPI(1);
-}
-
-/**
- * Get the active Git repository
- */
-export function getRepository(): any {
-  const git = getGitExtension();
-  const repositories = git.repositories;
-  
-  if (repositories.length === 0) {
-    throw new Error('No Git repository found');
-  }
-  
-  // Return the first repository (most common case)
-  // TODO: Handle multiple repositories/workspaces
-  return repositories[0];
+  return repoInfo;
 }
 
 /**
  * Get current branch name
  */
 export async function getCurrentBranch(): Promise<string> {
-  const repo = getRepository();
-  const head = repo.state.HEAD;
+  const repoInfo = await getRepository();
+  const head = repoInfo.repo.state.HEAD;
   
   if (!head || !head.name) {
     throw new Error('Could not determine current branch');
@@ -70,7 +51,8 @@ export function extractJiraKeyFromBranch(branchName: string): string | null {
  * Returns the tracking branch or configured default
  */
 export async function getBaseBranch(currentBranch: string): Promise<string> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   
   // Try to get upstream branch
   const head = repo.state.HEAD;
@@ -105,7 +87,8 @@ export async function getBaseBranch(currentBranch: string): Promise<string> {
  * Get commit log between current branch and base branch
  */
 export async function getCommitLog(baseBranch: string): Promise<CommitInfo[]> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const currentBranch = await getCurrentBranch();
   
   // Get commits that are in current branch but not in base
@@ -130,7 +113,8 @@ export async function getCommitLog(baseBranch: string): Promise<CommitInfo[]> {
  * Get file changes between current branch and base branch
  */
 export async function getFileChanges(baseBranch: string): Promise<FileChange[]> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const currentBranch = await getCurrentBranch();
   
   // Get diff between branches
@@ -185,7 +169,8 @@ export async function getFileDiff(
   filePath: string,
   baseBranch: string
 ): Promise<string> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const currentBranch = await getCurrentBranch();
   
   // Get diff content
@@ -197,7 +182,8 @@ export async function getFileDiff(
  * Check if working directory is clean
  */
 export async function isWorkingDirectoryClean(): Promise<boolean> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const changes = repo.state.workingTreeChanges;
   const indexChanges = repo.state.indexChanges;
   
@@ -208,7 +194,8 @@ export async function isWorkingDirectoryClean(): Promise<boolean> {
  * Get remote URL for the repository
  */
 export async function getRemoteUrl(): Promise<string | null> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const remotes = repo.state.remotes;
   
   if (remotes.length === 0) {
@@ -248,16 +235,17 @@ export function parseBitbucketUrl(remoteUrl: string): {
 /**
  * Get repository root path
  */
-export function getRepositoryRoot(): string {
-  const repo = getRepository();
-  return repo.rootUri.fsPath;
+export async function getRepositoryRoot(): Promise<string> {
+  const repoInfo = await getRepository();
+  return repoInfo.cwd;
 }
 
 /**
  * Check if a branch exists locally
  */
 export async function branchExists(branchName: string): Promise<boolean> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const refs = await repo.getRefs();
   
   return refs.some((ref: any) => ref.name === branchName);
@@ -267,7 +255,8 @@ export async function branchExists(branchName: string): Promise<boolean> {
  * Check if a branch exists on remote
  */
 export async function remoteBranchExists(branchName: string): Promise<boolean> {
-  const repo = getRepository();
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   const refs = await repo.getRefs();
   
   return refs.some((ref: any) => 

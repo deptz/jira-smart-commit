@@ -255,3 +255,143 @@ export async function resetJiraApiToken(context: vscode.ExtensionContext): Promi
   await context.secrets.delete(secretKey);
   vscode.window.showInformationMessage('JIRA API token has been reset. You will be prompted for a new token on next use.');
 }
+
+/**
+ * Repository information for multi-root workspace support
+ */
+export interface RepositoryInfo {
+  /** Git repository object from VS Code Git API */
+  repo: any;
+  /** Absolute path to repository root */
+  cwd: string;
+  /** Repository name (folder name) */
+  name: string;
+}
+
+/**
+ * Get the VS Code Git extension API
+ * @throws Error if Git extension is not found or not active
+ */
+export async function getGitAPI(): Promise<any> {
+  const gitExt = vscode.extensions.getExtension('vscode.git');
+  if (!gitExt) {
+    throw new Error('Git extension not found. Please ensure Git is installed and the VS Code Git extension is enabled.');
+  }
+  
+  const api = gitExt.isActive 
+    ? gitExt.exports.getAPI(1) 
+    : (await gitExt.activate(), gitExt.exports.getAPI(1));
+  
+  if (!api || !api.repositories) {
+    throw new Error('Git API not available. Please ensure you have a Git repository open.');
+  }
+  
+  return api;
+}
+
+/**
+ * Get active repository based on current editor context
+ * @returns Repository info or undefined if no repository found
+ */
+export async function getActiveRepository(): Promise<RepositoryInfo | undefined> {
+  try {
+    const api = await getGitAPI();
+    
+    if (!api.repositories?.length) {
+      return undefined;
+    }
+    
+    // If user has active editor, find repo containing that file
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+      const docPath = activeEditor.document.uri.fsPath;
+      const repo = api.repositories.find((r: any) => 
+        docPath.startsWith(r.rootUri.fsPath)
+      );
+      if (repo) {
+        return {
+          repo,
+          cwd: repo.rootUri.fsPath,
+          name: getRepositoryName(repo.rootUri.fsPath)
+        };
+      }
+    }
+    
+    // Fallback: use first repository
+    const repo = api.repositories[0];
+    return {
+      repo,
+      cwd: repo.rootUri.fsPath,
+      name: getRepositoryName(repo.rootUri.fsPath)
+    };
+  } catch (error) {
+    return undefined;
+  }
+}
+
+/**
+ * Show repository picker for multi-root workspaces
+ * @returns Selected repository info or undefined if cancelled
+ */
+export async function pickRepository(): Promise<RepositoryInfo | undefined> {
+  try {
+    const api = await getGitAPI();
+    
+    if (!api.repositories?.length) {
+      throw new Error('No Git repositories found in workspace. Please open a folder with a Git repository.');
+    }
+    
+    // Single repo: use directly
+    if (api.repositories.length === 1) {
+      const repo = api.repositories[0];
+      return {
+        repo,
+        cwd: repo.rootUri.fsPath,
+        name: getRepositoryName(repo.rootUri.fsPath)
+      };
+    }
+    
+    // Multiple repos: let user choose
+    interface RepoQuickPickItem extends vscode.QuickPickItem {
+      repo: any;
+      cwd: string;
+      name: string;
+    }
+    
+    const items: RepoQuickPickItem[] = api.repositories.map((repo: any) => {
+      const name = getRepositoryName(repo.rootUri.fsPath);
+      return {
+        label: `$(repo) ${name}`,
+        description: repo.rootUri.fsPath,
+        repo,
+        cwd: repo.rootUri.fsPath,
+        name
+      };
+    });
+    
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Select repository for commit generation',
+      title: 'Select Git Repository'
+    });
+    
+    if (!selected) {
+      return undefined;
+    }
+    
+    return {
+      repo: selected.repo,
+      cwd: selected.cwd,
+      name: selected.name
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Get repository name from path (last folder name)
+ */
+function getRepositoryName(repoPath: string): string {
+  const parts = repoPath.split(/[/\\]/);
+  return parts[parts.length - 1] || 'repo';
+}

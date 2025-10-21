@@ -65,7 +65,7 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
   }
   
   // Step 5: Detect language and framework
-  const workspaceRoot = getRepositoryRoot();
+  const workspaceRoot = await getRepositoryRoot();
   const language = await detectProjectLanguage(workspaceRoot);
   
   // Step 6: Detect test coverage
@@ -196,7 +196,7 @@ export async function generatePRDescriptionWithProgress(
   progress.report({ message: 'Detecting project language...', increment: 10 });
   
   // Step 5: Detect language
-  const workspaceRoot = getRepositoryRoot();
+  const workspaceRoot = await getRepositoryRoot();
   const language = await detectProjectLanguage(workspaceRoot);
   
   progress.report({ message: 'Detecting test coverage...', increment: 10 });

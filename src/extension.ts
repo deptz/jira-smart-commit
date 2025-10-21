@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import { fetchIssue } from './jiraClient';
 import { analyzeStaged, DiffSummary } from './diffAnalyzer';
 import { renderTemplate } from './template';
-import { getConfig, ensureApiToken, inferScope, guessTypeFromDiff, detectBreaking, resetJiraApiToken, Config } from './utils';
+import { getConfig, ensureApiToken, inferScope, guessTypeFromDiff, detectBreaking, resetJiraApiToken, Config, pickRepository, getActiveRepository } from './utils';
 import { JiraIssue } from './types';
 import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
@@ -35,6 +35,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context))),
     vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand()))
   );
+  
+  // Listen for active text editor changes to update status bar for multi-root workspaces
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      withHandledErrors(updateStatusBar());
+    })
+  );
 
   // On activation, try to update status bar with detected key
   withHandledErrors(updateStatusBar());
@@ -51,22 +58,33 @@ async function withHandledErrors<T>(p: Promise<T>): Promise<T | void> {
 }
 
 async function updateStatusBar() {
-  const key = await detectJiraKeyFromBranch();
-  statusBar.text = key ? `JIRA: ${key}` : 'JIRA: (no key)';
+  const repoInfo = await getActiveRepository();
+  if (!repoInfo) {
+    statusBar.text = 'JIRA: (no repo)';
+    return;
+  }
+  
+  const key = await detectJiraKeyFromBranch(repoInfo.cwd);
+  statusBar.text = key ? `JIRA: ${key} (${repoInfo.name})` : `JIRA: (no key) (${repoInfo.name})`;
 }
 
-async function detectJiraKeyFromBranch(): Promise<string | undefined> {
-  const cfg = getConfig();
-  const { stdout } = await exec('git rev-parse --abbrev-ref HEAD', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath });
-  const branch = stdout.trim();
-  const regex = new RegExp(cfg.branchPattern);
-  const match = regex.exec(branch);
-  const key = match?.groups?.['key'] ?? match?.[1];
-  return key;
+async function detectJiraKeyFromBranch(cwd: string): Promise<string | undefined> {
+  try {
+    const cfg = getConfig();
+    const { stdout } = await exec('git rev-parse --abbrev-ref HEAD', { cwd });
+    const branch = stdout.trim();
+    const regex = new RegExp(cfg.branchPattern);
+    const match = regex.exec(branch);
+    const key = match?.groups?.['key'] ?? match?.[1];
+    return key;
+  } catch (error) {
+    // Handle case where repository has no commits yet or other git errors
+    return undefined;
+  }
 }
 
-async function pickOrDetectJiraKey(): Promise<string | undefined> {
-  const key = await detectJiraKeyFromBranch();
+async function pickOrDetectJiraKey(cwd: string): Promise<string | undefined> {
+  const key = await detectJiraKeyFromBranch(cwd);
   if (key) return key;
 
   return vscode.window.showInputBox({
@@ -75,10 +93,18 @@ async function pickOrDetectJiraKey(): Promise<string | undefined> {
   });
 }
 
-async function getGitMessageBox(): Promise<vscode.SourceControlInputBox | undefined> {
+async function getGitMessageBox(targetCwd?: string): Promise<vscode.SourceControlInputBox | undefined> {
   const gitExt = vscode.extensions.getExtension('vscode.git');
   if (!gitExt) return;
   const api = gitExt.isActive ? gitExt.exports.getAPI(1) : (await gitExt.activate(), gitExt.exports.getAPI(1));
+  
+  // If targetCwd is provided, find the matching repository
+  if (targetCwd) {
+    const repo = api.repositories?.find((r: any) => r.rootUri.fsPath === targetCwd);
+    return repo?.inputBox;
+  }
+  
+  // Fallback to first repository (for backward compatibility)
   const repo = api.repositories?.[0];
   return repo?.inputBox;
 }
@@ -140,9 +166,16 @@ function appendJiraKeyToMessage(message: string, issue: JiraIssue, cfg: Config):
   }
 }
 
-async function generate(context: vscode.ExtensionContext, progress?: vscode.Progress<{ message?: string; increment?: number }>): Promise<string> {
+async function generate(context: vscode.ExtensionContext, progress?: vscode.Progress<{ message?: string; increment?: number }>): Promise<{ message: string; cwd: string }> {
   const cfg = getConfig();
-  const key = await pickOrDetectJiraKey();
+  
+  // Pick repository (auto-detect or let user choose)
+  const repoInfo = await pickRepository();
+  if (!repoInfo) throw new Error('No Git repository selected.');
+  
+  const { cwd } = repoInfo;
+  
+  const key = await pickOrDetectJiraKey(cwd);
   if (!key) throw new Error('No JIRA key provided.');
 
   await updateStatusBar();
@@ -168,7 +201,12 @@ async function generate(context: vscode.ExtensionContext, progress?: vscode.Prog
 
   // Analyze staged changes
   progress?.report({ message: 'Analyzing staged changes...', increment: 20 });
-  const diff: DiffSummary = await analyzeStaged(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+  const diff: DiffSummary = await analyzeStaged(cwd);
+  
+  // Check if there are any staged changes
+  if (diff.files.length === 0) {
+    throw new Error('No staged changes found. Please stage your changes with "git add" before generating a commit message.');
+  }
 
   // Guess type & scope
   const type = cfg.enableConventionalCommits ? guessTypeFromDiff(diff) : '';
@@ -185,7 +223,7 @@ async function generate(context: vscode.ExtensionContext, progress?: vscode.Prog
 
   // 2) Optionally run AI polishing/synthesis
   const aiEnabled = vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<boolean>('enabled', false);
-  if (!aiEnabled) return baseline;
+  if (!aiEnabled) return { message: baseline, cwd };
 
   progress?.report({ message: 'Preparing AI request...', increment: 10 });
   
@@ -237,7 +275,7 @@ Important:
   const acceptanceCriteriaText = (issue?.acceptance ?? []).map(b => '- ' + b).join('\n') || '- (not provided)';
   const acceptanceTokens = estimateTokens(acceptanceCriteriaText);
   const fixedContextTokens = estimateTokens(`Context:
-- Branch: ${await currentBranch()}
+- Branch: ${await currentBranch(cwd)}
 - JIRA: ${issue?.key ?? '(no-key)'} — ${issue?.summary ?? '(no summary)'}
 - Why (from JIRA): 
 
@@ -282,7 +320,7 @@ Staged changes:
   // Get commit history for context if enabled
   let commitHistoryText = '';
   if (cfg.includeCommitHistory && key) {
-    const previousCommits = await getPreviousCommitsForTicket(key, cfg.commitHistoryLimit);
+    const previousCommits = await getPreviousCommitsForTicket(key, cwd, cfg.commitHistoryLimit);
     if (previousCommits.length > 0) {
       commitHistoryText = `\n- Previous commits for this ticket (${previousCommits.length}):\n${previousCommits.map(c => `  • ${c.hash}: ${c.subject} (${c.date})`).join('\n')}`;
     }
@@ -290,7 +328,7 @@ Staged changes:
   
   // Build base prompt with token-aware content
   const basePrompt = `Context:
-- Branch: ${await currentBranch()}
+- Branch: ${await currentBranch(cwd)}
 - JIRA: ${issue?.key ?? '(no-key)'} — ${issue?.summary ?? '(no summary)'}
 - Description: ${descriptionText}
 - Acceptance criteria:
@@ -333,7 +371,7 @@ ${stagedChangesText}`;
       aiOut = appendJiraKeyToMessage(aiOut, issue, cfg);
     }
     
-    return aiOut || baseline;
+    return { message: aiOut || baseline, cwd };
   } catch (e: any) {
     // Check if error is due to missing/cancelled API key
     const isMissingKey = e?.message?.includes('API key') || e?.message?.includes('required');
@@ -342,14 +380,16 @@ ${stagedChangesText}`;
     } else {
       vscode.window.showWarningMessage(`AI post-processing failed: ${e?.message ?? e}. Falling back to baseline.`);
     }
-    return baseline;
+    return { message: baseline, cwd };
   }
 }
 
 // Command: Generate + Preview
+// Command: Generate + Preview
 async function generateCommand(context: vscode.ExtensionContext) {
   const cfg = getConfig();
-  const message = await vscode.window.withProgress({
+  
+  const result = await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: "Generating commit message...",
     cancellable: false
@@ -358,33 +398,33 @@ async function generateCommand(context: vscode.ExtensionContext) {
   });
 
   if (cfg.commitDirectly) {
-    await writeToGitBox(message);
-    await doCommit();
+    await writeToGitBox(result.message, result.cwd);
+    await doCommit(result.cwd);
     vscode.window.showInformationMessage('Committed with JIRA Smart Commit.');
     return;
   }
 
-  const doc = await vscode.workspace.openTextDocument({ content: message, language: 'git-commit' });
+  const doc = await vscode.workspace.openTextDocument({ content: result.message, language: 'git-commit' });
   await vscode.window.showTextDocument(doc, { preview: true });
 }
 
 // Command: Generate + Insert
 async function insertCommand(context: vscode.ExtensionContext) {
-  const message = await vscode.window.withProgress({
+  const result = await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: "Generating commit message...",
     cancellable: false
   }, async (progress) => {
     return await generate(context, progress);
   });
-  await writeToGitBox(message);
+  await writeToGitBox(result.message, result.cwd);
   vscode.window.showInformationMessage('Commit message inserted.');
 }
 
 // Command: Generate + Commit (with preview)
 async function commitCommand(context: vscode.ExtensionContext) {
   // Generate the commit message
-  const message = await vscode.window.withProgress({
+  const result = await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: "Generating commit message...",
     cancellable: false
@@ -397,7 +437,7 @@ async function commitCommand(context: vscode.ExtensionContext) {
     'Ready to commit with this message?',
     { 
       modal: true,          // Makes it a blocking modal dialog
-      detail: message       // Shows the full commit message
+      detail: result.message       // Shows the full commit message
     },
     'Commit Now',           // Button 1
     'Edit in Git Input'     // Button 2 (user can close dialog to cancel)
@@ -406,15 +446,15 @@ async function commitCommand(context: vscode.ExtensionContext) {
   // Handle user's choice
   switch (action) {
     case 'Commit Now':
-      // Insert message and commit immediately
-      await writeToGitBox(message);
-      await doCommit();
+      // Insert message and commit immediately using the selected repository
+      await writeToGitBox(result.message, result.cwd);
+      await doCommit(result.cwd);
       vscode.window.showInformationMessage('✓ Changes committed successfully!');
       break;
       
     case 'Edit in Git Input':
       // Insert message into Git input box for review
-      await writeToGitBox(message);
+      await writeToGitBox(result.message, result.cwd);
       vscode.window.showInformationMessage('✓ Message inserted into Git input box. Review and commit when ready.');
       break;
       
@@ -425,34 +465,33 @@ async function commitCommand(context: vscode.ExtensionContext) {
   }
 }
 
-async function writeToGitBox(message: string) {
-  const box = await getGitMessageBox();
+async function writeToGitBox(message: string, cwd?: string) {
+  const box = await getGitMessageBox(cwd);
   if (!box) throw new Error('No Git repository/input found.');
   box.value = message;
 }
 
-async function doCommit() {
-  const box = await getGitMessageBox();
+async function doCommit(cwd: string) {
+  const box = await getGitMessageBox(cwd);
   const msg = box?.value ?? '';
   if (!msg.trim()) throw new Error('Empty commit message.');
-  await exec(`git commit -m ${escapeShellArg(msg)}`, { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath });
+  await exec(`git commit -m ${escapeShellArg(msg)}`, { cwd });
 }
 
 function escapeShellArg(s: string) {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-async function currentBranch(): Promise<string> {
+async function currentBranch(cwd: string): Promise<string> {
   try {
-    const { stdout } = await exec('git rev-parse --abbrev-ref HEAD', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath });
+    const { stdout } = await exec('git rev-parse --abbrev-ref HEAD', { cwd });
     return stdout.trim();
   } catch { return '(unknown)'; }
 }
 
 // Get previous commits for the same JIRA ticket
-async function getPreviousCommitsForTicket(jiraKey: string, limit: number = 5): Promise<Array<{hash: string, subject: string, date: string}>> {
+async function getPreviousCommitsForTicket(jiraKey: string, cwd: string, limit: number = 5): Promise<Array<{hash: string, subject: string, date: string}>> {
   try {
-    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     // Get commits that mention the JIRA key, excluding the current staged changes
     const { stdout } = await exec(
       `git log --all --grep="${jiraKey}" --format="%h|%s|%ar" -n ${limit}`,

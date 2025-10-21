@@ -1,11 +1,34 @@
 
 # Changelog
 
-## 0.3.0 (2025-10-18)
+## 0.3.0 (2025-10-21)
 
-### 🚀 Major Features
+#### **Multi-Root Workspace Support** - Work seamlessly with monorepos and multiple Git projects (Experimental) 
+- **Smart Repository Detection** - Automatically detects the repository based on active file
+  - Uses VS Code's built-in Git API for reliable repository detection
+  - Seamlessly works with single and multi-root workspaces
+  
+- **Repository Picker** - Select target repository when working with multiple projects
+  - Shows repository picker when multiple Git repositories are detected
+  - Displays repository name and full path for easy identification
+  - Single repository: works exactly as before with zero changes
+  
+- **Enhanced Status Bar** - Display current repository context
+  - Format: `JIRA: ABC-123 (repo-name)` shows both JIRA key and repository
+  - Dynamically updates when switching between files in different repos
+  - Clear indication when no repository is found: `JIRA: (no repo)`
+  
+- **Unified Experience** - All features work with multi-root support
+  - Commit message generation: Select repository, generate from staged changes
+  - PR description generation: Works with selected repository's Git history
+  - JIRA integration: Detects JIRA key from branch in selected repository
+  
+- **Error Handling** - User-friendly errors with actionable guidance
+  - Clear messages when Git extension is not available
+  - Helpful guidance when no Git repository is found
+  - Graceful handling of repository selection cancellation
 
-#### **PR Description Generator** - Generate comprehensive PR descriptions from Git commits
+#### **PR Description Generator** - Generate comprehensive PR descriptions from Git commits (Experimental)
 - **Automatic Branch Analysis** - Extract JIRA key from branch name using configurable patterns
   - 3 presets: Standard, Feature-based, User-based + Custom regex patterns
   - Supports common workflows: feature/ABC-123, username/ABC-123, ABC-123-description
@@ -31,14 +54,6 @@
   - **Impact & Risks**: Breaking changes, migrations, config changes, deployment notes
   - **Additional Notes**: Acceptance criteria, related issues, technical details
   
-- **Quality Scoring (0-100)** - Objective quality measurement
-  - Mandatory sections (50pts): All 5 sections with meaningful content
-  - JIRA context (20pts): Issue linked with description/acceptance
-  - Commit quality (15pts): Conventional commits, scope usage, message quality
-  - Test coverage (10pts): Coverage present and meets threshold
-  - Technical details (5pts): Documentation completeness
-  - Grade system: A (90+), B (80-89), C (70-79), D (60-69), F (<60)
-  
 - **Validation System** - Ensure PR description quality
   - Check all sections present and non-empty
   - Minimum 50 characters per section
@@ -52,7 +67,7 @@
   - GitLab
   - Markdown formatting preserved across platforms
 
-#### **AI-Powered Enhancement** (Optional) 🤖
+#### **AI-Powered Enhancement** (Optional)
 - **LLM Integration** - Enhance PR descriptions using AI
   - Reuses existing AI provider configuration (OpenAI, Anthropic, Gemini, Ollama)
   - No additional API keys needed
@@ -68,7 +83,7 @@
   - Maintains markdown formatting and links
   - Preserves all JIRA references
   
-- **Quality Improvement** - AI typically increases scores by 10-20 points
+- **Quality Improvement** 
   - Better explanations and flow
   - Additional helpful context
   - Professional technical writing
@@ -92,7 +107,7 @@
 - `jiraSmartCommit.pr.ai.model` - Model override (inherits from parent if empty)
 
 ### 📝 Commands
-- **New**: `JIRA Smart Commit: Generate PR Description` - Generate comprehensive PR description with quality scoring
+- **New**: `JIRA Smart Commit: Generate PR Description` - Generate comprehensive PR description
 
 ### 🎨 User Experience
 - **Progress Notifications** - Real-time progress during generation
@@ -101,7 +116,6 @@
   - Clear error messages with actionable guidance
   
 - **Interactive Dialogs** - User-friendly result presentation
-  - Quality score with emoji and grade
   - One-click copy to clipboard
   - Markdown preview with metadata
   - Validation warnings in output channel

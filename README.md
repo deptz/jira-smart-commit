@@ -162,6 +162,7 @@ $ git add infrastructure/repository/user_repo.go
 - Composable commit template and **AI post-processing** (OpenAI, Anthropic, Gemini, Ollama)
 - Status Bar integration and one-click `Generate → Preview → Commit` flow
 - Offline fallback if JIRA is unreachable (uses diff-only)
+- **Multi-root workspace support** - works seamlessly with monorepos and multiple Git projects
 
 ### PR Description Generation (NEW in v0.3.0) 🚀
 - **5 mandatory sections** with quality scoring (0-100 points, A-F grades)
@@ -171,11 +172,48 @@ $ git add infrastructure/repository/user_repo.go
 - **JIRA integration** (auto-extracts acceptance criteria, issue context)
 - **Quality validation** with improvement suggestions
 - **Platform-specific formatting** with PR title suggestions
+- **Multi-root workspace support** - select repository when working with multiple projects
+
+### Multi-Root Workspace Support
+Working with **monorepos** or **multiple Git repositories** in one VS Code window? No problem!
+
+#### Automatic Repository Detection
+- **Smart detection**: Automatically detects the repository based on your active file
+- **Repository picker**: When ambiguous, shows a quick picker to select the target repository
+- **Status bar indicator**: Displays current repository name alongside JIRA key: `JIRA: ABC-123 (backend)`
+- **Dynamic updates**: Status bar automatically updates when switching between files in different repos
+
+#### How It Works
+1. **Single Repository**: Works exactly as before, no changes needed
+2. **Multiple Repositories**:
+   - Opens a repository picker when you run any command
+   - Automatically selects the repo containing your active file
+   - Shows repository name in parentheses in the status bar
+   - Seamlessly handles PR generation, commit message generation, etc.
+
+#### Example Usage
+```bash
+# Monorepo structure
+workspace/
+├── backend/          # Git repo 1
+│   └── .git
+├── frontend/         # Git repo 2
+│   └── .git
+└── mobile/           # Git repo 3
+    └── .git
+```
+
+When you:
+- Open a file in `backend/` → Extension works with `backend` repo
+- Run commit generation → Picker shows: `backend`, `frontend`, `mobile`
+- Switch to `frontend/` file → Status bar updates to show `frontend` repo
+- Generate PR description → Uses the selected repository's Git history
 
 ### Security & Reliability
 - **SecretStorage** for API keys — no plaintext in settings
 - **Graceful fallback** - works without AI or JIRA
 - **Multi-level error handling** ensures generation always succeeds
+- **User-friendly errors** with actionable guidance
 
 ## 🧩 Folder Structure
 ```

@@ -12,7 +12,7 @@ export type DiffSummary = {
   fullDiff?: string; // Optional full diff content
 };
 
-export async function analyzeStaged(cwd?: string): Promise<DiffSummary> {
+export async function analyzeStaged(cwd: string): Promise<DiffSummary> {
   const { stdout } = await exec('git diff --cached --name-status', { cwd });
   const files: FileChange[] = stdout
     .trim()
