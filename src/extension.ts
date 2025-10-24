@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import { fetchIssue } from './jiraClient';
 import { analyzeStaged, DiffSummary } from './diffAnalyzer';
 import { renderTemplate } from './template';
-import { getConfig, ensureApiToken, inferScope, guessTypeFromDiff, detectBreaking, resetJiraApiToken, Config, pickRepository, getActiveRepository } from './utils';
+import { getConfig, ensureApiToken, inferScope, guessTypeFromDiff, detectBreaking, resetJiraApiToken, Config, pickRepository, getActiveRepository, escapeShellArg } from './utils';
 import { JiraIssue } from './types';
 import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
@@ -478,10 +478,6 @@ async function doCommit(cwd: string) {
   await exec(`git commit -m ${escapeShellArg(msg)}`, { cwd });
 }
 
-function escapeShellArg(s: string) {
-  return `'${s.replace(/'/g, `'\\''`)}'`;
-}
-
 async function currentBranch(cwd: string): Promise<string> {
   try {
     const { stdout } = await exec('git rev-parse --abbrev-ref HEAD', { cwd });
@@ -494,7 +490,7 @@ async function getPreviousCommitsForTicket(jiraKey: string, cwd: string, limit: 
   try {
     // Get commits that mention the JIRA key, excluding the current staged changes
     const { stdout } = await exec(
-      `git log --all --grep="${jiraKey}" --format="%h|%s|%ar" -n ${limit}`,
+      `git log --all --grep=${escapeShellArg(jiraKey)} --format="%h|%s|%ar" -n ${limit}`,
       { cwd }
     );
     

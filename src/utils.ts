@@ -395,3 +395,23 @@ function getRepositoryName(repoPath: string): string {
   const parts = repoPath.split(/[/\\]/);
   return parts[parts.length - 1] || 'repo';
 }
+
+/**
+ * Cross-platform shell argument escaping for git commands
+ * @param s String to escape for shell execution
+ * @returns Properly escaped string for the current platform
+ */
+export function escapeShellArg(s: string): string {
+  // Cross-platform shell argument escaping
+  const isWindows = process.platform === 'win32';
+  
+  if (isWindows) {
+    // Windows Command Prompt / PowerShell escaping
+    // Escape double quotes and wrap in double quotes
+    return `"${s.replace(/"/g, '""')}"`;
+  } else {
+    // Unix/Linux/macOS escaping (bash, zsh, etc.)
+    // Escape single quotes and wrap in single quotes
+    return `'${s.replace(/'/g, `'\\''`)}'`;
+  }
+}

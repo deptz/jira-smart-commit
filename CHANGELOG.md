@@ -1,6 +1,29 @@
 
 # Changelog
 
+## 0.3.2 (2025-10-24)
+
+#### **Windows Compatibility Fixes** - Complete cross-platform shell command support
+- **Fixed Windows Git Command Issues** - Resolved shell escaping problems causing commit failures
+  - Fixed `git commit` command failing on Windows with "pathspec did not match any files" error
+  - Implemented cross-platform shell argument escaping for Windows Command Prompt and PowerShell
+  - Added proper double-quote escaping for Windows vs single-quote escaping for Unix/Linux/macOS
+  
+- **Enhanced Multi-Repo Windows Support** - All multi-repository features now work correctly on Windows
+  - Fixed JIRA key search in git log commands that could fail on Windows
+  - Centralized shell escaping utility in `utils.ts` for consistent cross-platform behavior
+  - Verified all git command executions across the entire codebase for Windows compatibility
+  
+- **Security Improvements** - Prevented potential shell injection vulnerabilities
+  - All dynamic git command arguments now properly escaped on all platforms
+  - Eliminated unsafe string interpolation in shell commands
+  - Added comprehensive protection against special characters in commit messages and JIRA keys
+
+### 🔧 Bug Fixes
+- Windows users can now successfully commit messages with spaces and special characters
+- Multi-repo functionality works correctly on Windows Command Prompt and PowerShell
+- Git log searches for JIRA keys no longer fail on Windows systems
+
 ## 0.3.0 (2025-10-21)
 
 #### **Multi-Root Workspace Support** - Work seamlessly with monorepos and multiple Git projects (Experimental) 
