@@ -258,6 +258,8 @@ jira-smart-commit/
 
 ## 🚀 Getting Started
 
+📖 **[Complete How-To Guide](./HOW-TO-GUIDE.md)** - Detailed setup and usage instructions
+
 1. **Install deps**
    ```bash
    npm i
