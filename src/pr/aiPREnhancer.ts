@@ -231,7 +231,7 @@ async function getAIConfiguration(): Promise<AIConfig> {
   const parentConfig = vscode.workspace.getConfiguration('jiraSmartCommit.ai');
   const prConfig = vscode.workspace.getConfiguration('jiraSmartCommit.pr.ai');
   
-  const provider = (prConfig.get('provider') || parentConfig.get('provider', 'openai')) as 'openai' | 'azure-openai' | 'anthropic' | 'gemini' | 'ollama';
+  const provider = (prConfig.get('provider') || parentConfig.get('provider', 'openai')) as 'openai' | 'azure-openai' | 'anthropic' | 'gemini' | 'ollama' | 'moonshot';
   const model = (prConfig.get('model') || parentConfig.get('model', 'gpt-4o-mini')) as string;
   const baseUrl = (prConfig.get('baseUrl') || parentConfig.get('baseUrl', '')) as string;
   const maxTokens = parentConfig.get('maxTokens', 1000) as number;

@@ -5,6 +5,7 @@ import { OpenAIClient } from './openaiProvider';
 import { AnthropicClient } from './anthropicProvider';
 import { GeminiClient } from './geminiProvider';
 import { OllamaClient } from './ollamaProvider';
+import { MoonshotClient } from './moonshotProvider';
 import { getApiKey } from '../aiKeyManager';
 
 export async function getAiClient(context: vscode.ExtensionContext, cfg: AIConfig): Promise<AiClient> {
@@ -27,6 +28,10 @@ export async function getAiClient(context: vscode.ExtensionContext, cfg: AIConfi
     }
     case 'ollama': {
       return new OllamaClient(cfg);
+    }
+    case 'moonshot': {
+      const key = await getApiKey(context, 'Moonshot');
+      return new MoonshotClient(cfg, key);
     }
     default:
       throw new Error(`Unsupported provider: ${cfg.provider}`);

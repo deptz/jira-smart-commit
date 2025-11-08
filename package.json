@@ -189,7 +189,8 @@
             "azure-openai",
             "anthropic",
             "gemini",
-            "ollama"
+            "ollama",
+            "moonshot"
           ],
           "default": "openai",
           "description": "LLM provider to use."
@@ -239,6 +240,20 @@
             "llama3.2:3b",
             "codellama:7b",
             "mistral:7b",
+            "kimi-k2-turbo-preview",
+            "kimi-k2-thinking-turbo",
+            "kimi-k2-thinking",
+            "kimi-k2-0905-preview",
+            "kimi-k2-0711-preview",
+            "kimi-latest",
+            "kimi-thinking-preview",
+            "moonshot-v1-auto",
+            "moonshot-v1-128k",
+            "moonshot-v1-32k",
+            "moonshot-v1-8k",
+            "moonshot-v1-128k-vision-preview",
+            "moonshot-v1-32k-vision-preview",
+            "moonshot-v1-8k-vision-preview",
             "custom"
           ],
           "markdownEnumDescriptions": [
@@ -282,6 +297,20 @@
             "Ollama Llama 3.2 3B",
             "Ollama CodeLlama 7B",
             "Ollama Mistral 7B",
+            "Moonshot Kimi K2 Turbo Preview (262k context)",
+            "Moonshot Kimi K2 Thinking Turbo (262k context)",
+            "Moonshot Kimi K2 Thinking (262k context)",
+            "Moonshot Kimi K2 0905 Preview (262k context)",
+            "Moonshot Kimi K2 0711 Preview (131k context)",
+            "Moonshot Kimi Latest (131k context)",
+            "Moonshot Kimi Thinking Preview (131k context)",
+            "Moonshot v1 Auto (131k context)",
+            "Moonshot v1 128k",
+            "Moonshot v1 32k",
+            "Moonshot v1 8k",
+            "Moonshot v1 128k Vision Preview",
+            "Moonshot v1 32k Vision Preview",
+            "Moonshot v1 8k Vision Preview",
             "Custom model name (for Azure deployments or other providers)"
           ]
         },
@@ -423,7 +452,8 @@
             "azure-openai",
             "anthropic",
             "gemini",
-            "ollama"
+            "ollama",
+            "moonshot"
           ],
           "default": "",
           "markdownDescription": "AI provider override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.provider."

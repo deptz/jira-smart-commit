@@ -159,7 +159,7 @@ $ git add infrastructure/repository/user_repo.go
 - Detect JIRA key from branch name (configurable regex) or prompt
 - Fetch JIRA issue (summary, description, subtasks/links/parent)
 - Analyze staged changes to infer type/scope and produce concise bullets
-- Composable commit template and **AI post-processing** (OpenAI, Anthropic, Gemini, Ollama)
+- Composable commit template and **AI post-processing** (OpenAI, Anthropic, Gemini, Ollama, Moonshot)
 - Status Bar integration and one-click `Generate → Preview → Commit` flow
 - Offline fallback if JIRA is unreachable (uses diff-only)
 - **Multi-root workspace support** - works seamlessly with monorepos and multiple Git projects
@@ -232,7 +232,8 @@ jira-smart-commit/
 │  │  ├─ openaiProvider.ts
 │  │  ├─ anthropicProvider.ts
 │  │  ├─ geminiProvider.ts
-│  │  └─ ollamaProvider.ts
+│  │  ├─ ollamaProvider.ts
+│  │  └─ moonshotProvider.ts
 │  ├─ pr/                         # NEW: PR Description Generator
 │  │  ├─ commitAnalyzer.ts       # Analyze conventional commits
 │  │  ├─ sectionGenerator.ts     # Generate 5 mandatory sections
@@ -274,7 +275,7 @@ jira-smart-commit/
 3. **(Optional) Enable AI**
    - Set:
      - `jiraSmartCommit.ai.enabled = true`
-     - `jiraSmartCommit.ai.provider = openai | anthropic | gemini | ollama | azure-openai`
+     - `jiraSmartCommit.ai.provider = openai | anthropic | gemini | ollama | azure-openai | moonshot`
      - `jiraSmartCommit.ai.model = gpt-4o-mini` (for OpenAI) or respective model/deployment
    - On first AI call, you'll be prompted for the provider API key → stored securely.
 
@@ -339,7 +340,7 @@ jira-smart-commit/
 ### AI Settings
 
 - `jiraSmartCommit.ai.enabled` — Enable AI post-processing (default: `false`)
-- `jiraSmartCommit.ai.provider` — `openai | anthropic | gemini | ollama | azure-openai`
+- `jiraSmartCommit.ai.provider` — `openai | anthropic | gemini | ollama | azure-openai | moonshot`
 - `jiraSmartCommit.ai.model` — Model name (e.g., `gpt-4o-mini`, `claude-3-5-sonnet-20241022`)
 - `jiraSmartCommit.ai.*` — Additional provider/model/prompts/temperature settings
 

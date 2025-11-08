@@ -19,7 +19,7 @@ If you want to enhance your commits with AI suggestions, enable these options:
 |---------|-------------|---------|
 | **AI: Enabled** | Check this to enable AI support | ☑️ |
 | **AI: Model** | Choose your preferred LLM model | e.g., `gpt-5`, `claude-sonnet-4-5`, `gemini-2.5-pro` |
-| **AI: Provider** | Select the provider that matches the model | e.g., OpenAI, Anthropic, Google |
+| **AI: Provider** | Select the provider that matches the model | e.g., OpenAI, Anthropic, Google, Moonshot |
 | **AI: Temperature** | Set the temperature configuration. | ⚠️ Note: Only for OpenAI GPT-5, must be set to 1.0|
 | **AI: Max Tokens** | Defines how much context (tokens) the AI can use to analyze your commit. Set this higher to include more context, including file diffs, for better AI suggestions. | e.g. 1000 or higher |
 
@@ -99,7 +99,7 @@ Automate commit message generation with Git hooks:
 {
   "jiraSmartCommit.ai.enabled": true,
   "jiraSmartCommit.ai.provider": "anthropic",
-  "jiraSmartCommit.ai.model": "claude-3-haiku-20240307",
+  "jiraSmartCommit.ai.model": "claude-haiku-4-5",
   "jiraSmartCommit.ai.maxTokens": 2000,
   "jiraSmartCommit.ai.temperature": 0.7
 }
