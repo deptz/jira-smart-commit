@@ -1,6 +1,34 @@
 
 # Changelog
 
+## 0.3.3 (2025-11-08)
+
+#### **Moonshot AI Support** - Added support for Kimi (Moonshot AI) provider
+- **New AI Provider** - Added Moonshot as a supported AI provider
+  - Support for all 14 Moonshot models including K2 series with up to 262k context
+  - Models available: `kimi-k2-turbo-preview`, `kimi-k2-thinking-turbo`, `kimi-latest`, and more
+  - Vision models: `moonshot-v1-*-vision-preview` variants for enhanced capabilities
+  
+- **Extended Model Selection** - Comprehensive model options
+  - **K2 Series** (Latest): `kimi-k2-turbo-preview`, `kimi-k2-thinking-turbo`, `kimi-k2-thinking` (262k context)
+  - **Standard Models**: `kimi-latest`, `kimi-thinking-preview`, `moonshot-v1-auto` (131k context)
+  - **Legacy Models**: `moonshot-v1-128k`, `moonshot-v1-32k`, `moonshot-v1-8k`
+  - **Vision Models**: Enhanced image understanding capabilities
+  
+- **Complete Integration** - Seamless integration with existing AI features
+  - Works with both commit message generation and PR description enhancement
+  - Follows existing API key management and secure storage patterns
+  - Uses Moonshot's official API endpoint: `https://api.moonshot.cn/v1`
+  
+- **Documentation Updates** - Updated guides and examples
+  - Updated README.md with Moonshot provider information
+  - Included context window information for model selection guidance
+
+### 🔧 Configuration
+- Set `jiraSmartCommit.ai.provider` to `"moonshot"`
+- Choose from 14+ available Kimi models in VS Code settings
+- API key will be requested on first use and stored securely
+
 ## 0.3.2 (2025-10-24)
 
 #### **Windows Compatibility Fixes** - Complete cross-platform shell command support
