@@ -1,6 +1,47 @@
 
 # Changelog
 
+## 0.3.5 (2025-11-15)
+
+#### **First Prompt Generator** - Generate prompts from JIRA issues for GitHub Copilot Chat
+
+### ✨ New Features
+- **JIRA-to-Prompt Generator** - Automatically create structured prompts from JIRA tickets
+  - Extracts JIRA key from current Git branch name
+  - Fetches complete issue details (summary, description, acceptance criteria)
+  - Generates context-rich prompts optimized for GitHub Copilot Chat
+  - Automatically opens Copilot Chat with pre-filled prompt
+  
+- **Issue Type-Aware Templates** - Different prompt strategies for different work types
+  - **Task/Story Template**: Feature implementation focus with architecture and design thinking
+  - **Bug Template**: Root cause analysis with hypothesis-driven debugging approach
+  - Customizable templates via settings for your team's workflow
+  
+- **Multi-Repository Support** - Works seamlessly in multi-repo workspaces
+  - Automatically detects and displays available Git repositories
+  - Allows repository selection when multiple repos are open
+  - Uses VS Code's Git extension API for accurate branch detection
+  - Properly extracts JIRA keys from the selected repository's branch
+
+- **Enhanced Configuration Editor** - Better UX for editing prompts and templates
+  - All prompt/template fields now use multi-line text areas instead of single-line inputs
+  - Makes editing long prompts much more comfortable
+  - Affects: `commitTemplate`, `systemPrompt`, `userPromptTemplate`, `taskTemplate`, `bugTemplate`
+
+### 🐛 Bug Fixes
+- **Branch Pattern Detection** - Fixed JIRA key extraction from branch names with prefixes (e.g., `bugfix/`, `feature/`)
+  - Updated default pattern from `(?<key>[A-Z][A-Z0-9]+-\d+)` to `(?:^|/)(?<key>[A-Z][A-Z0-9]+-\d+)`
+  - Now correctly extracts keys from: `bugfix/QON-123-description`, `feature/ABC-456-name`, etc.
+  - Improved error messages showing actual branch name with prefix examples
+- **Code Cleanup** - Removed duplicate default templates from TypeScript code (now only in `package.json`)
+
+### 📝 Commands
+- **New**: `JIRA Smart Commit: First Prompt Generator` - Generate AI prompt from JIRA issue
+
+### ⚙️ Configuration
+- `jiraSmartCommit.firstPrompt.taskTemplate` - Template for Task/Story type issues
+- `jiraSmartCommit.firstPrompt.bugTemplate` - Template for Bug/Defect type issues
+
 ## 0.3.4 (2025-11-15)
 
 #### **GPT-5.1 Support** - Added support for OpenAI's latest flagship model

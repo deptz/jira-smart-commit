@@ -27,7 +27,7 @@ export function getConfig(): Config {
   return {
     baseUrl: cfg.get<string>('baseUrl', ''),
     email: cfg.get<string>('email', ''),
-    branchPattern: cfg.get<string>('branchPattern', '(?<key>[A-Z][A-Z0-9]+-\\d+)')!,
+    branchPattern: cfg.get<string>('branchPattern', '(?:^|/)(?<key>[A-Z][A-Z0-9]+-\\d+)')!,
     enableConventionalCommits: cfg.get<boolean>('enableConventionalCommits', true)!,
     commitTemplate: cfg.get<string>('commitTemplate', ''),
     commitDirectly: cfg.get<boolean>('commitDirectly', false)!,

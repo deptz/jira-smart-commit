@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
   "publisher": "triwibowo",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -67,6 +67,10 @@
         "command": "jiraSmartCommit.generatePRDescription",
         "title": "JIRA Smart Commit: Generate PR Description",
         "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "jiraSmartCommit.firstPromptGenerator",
+        "title": "JIRA Smart Commit: First Prompt Generator"
       }
     ],
     "configuration": {
@@ -82,8 +86,8 @@
         },
         "jiraSmartCommit.branchPattern": {
           "type": "string",
-          "default": "(?<key>[A-Z][A-Z0-9]+-\\d+)",
-          "markdownDescription": "Regex with `(?<key>...)` capturing the JIRA key from branch name."
+          "default": "(?:^|/)(?<key>[A-Z][A-Z0-9]+-\\d+)",
+          "markdownDescription": "Regex with `(?<key>...)` capturing the JIRA key from branch name. Supports prefixes like `feature/`, `bugfix/`, etc."
         },
         "jiraSmartCommit.enableConventionalCommits": {
           "type": "boolean",
@@ -93,6 +97,7 @@
         "jiraSmartCommit.commitTemplate": {
           "type": "string",
           "default": "",
+          "editPresentation": "multilineText",
           "markdownDescription": "Custom template. Placeholders: `${type}`, `${scope}`, `${jira.summary}`, `${jira.oneLineDescription}`, `${jira.acceptanceBullets}`, `${jira.key}`, `${jira.relatedKeysFooter}`, `${changes.bullets}`."
         },
         "jiraSmartCommit.commitDirectly": {
@@ -338,11 +343,13 @@
         "jiraSmartCommit.ai.systemPrompt": {
           "type": "string",
           "default": "",
+          "editPresentation": "multilineText",
           "markdownDescription": "System prompt override used to constrain style."
         },
         "jiraSmartCommit.ai.userPromptTemplate": {
           "type": "string",
           "default": "",
+          "editPresentation": "multilineText",
           "markdownDescription": "User template with variables: ${format}, ${lang}, ${type}, ${scope}, ${breaking}, ${jira.key}, ${jira.summary}, ${jira.oneLineDescription}, ${jira.acceptanceBullets}, ${jira.relatedKeysFooter}, ${changes.bullets}."
         },
         "jiraSmartCommit.ai.format": {
@@ -466,6 +473,18 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Model override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.model. Higher-quality models (GPT-5.1, GPT-4, Claude Sonnet) recommended for better PR descriptions."
+        },
+        "jiraSmartCommit.firstPrompt.taskTemplate": {
+          "type": "string",
+          "default": "You are a Staff Engineer responsible for designing and implementing new features.\nYou prioritize correctness, security, maintainability, and consistency with the existing architecture.\nYou never guess silently. If requirements or constraints are unclear, you ask.\n### CORE PRINCIPLES\n- Design before code: architecture and responsibilities come first.\n- Minimal surface area: change only what needs to be changed.\n- Consistency: follow existing patterns, styles, and abstractions.\n- Defensiveness: validate inputs, handle failure modes, avoid security pitfalls.\n### HOW TO THINK (INTERNAL ONLY)\nYou must use the following reasoning process, but do NOT include it in the final answer.\n\n1. Restate the feature in your own words.\n2. Extract and list the explicit requirements and acceptance criteria.\n3. Identify missing or ambiguous requirements. Flag them.\n4. Break the feature into components (API, domain logic, persistence, background jobs, UI, etc.).\n5. For each component, define:\n   - responsibility\n   - inputs/outputs\n   - dependencies\n6. Design the minimal set of changes to:\n   - data models / schemas (if any)\n   - APIs / handlers / controllers\n   - services / use-cases\n   - background jobs / async flows\n7. Check the design against:\n   - security concerns (auth, authz, injection, data leaks)\n   - performance constraints\n   - failure modes\n8. Plan tests that prove the behavior and prevent regressions.\n\n### REQUIRED INPUTS (FROM USER)\nThe user will provide some combination of:\n- Feature description and/or user story\n- Acceptance criteria\n- Existing code structure (files, modules, endpoints)\n- API contracts or schemas (if any)\n- Tech stack / framework (if not obvious from code)\n\nIf critical items are missing, you must ask clarifying questions BEFORE proposing final code.\n\nINPUT:\n{{DESCRIPTION}}",
+          "editPresentation": "multilineText",
+          "markdownDescription": "Template for Task/Story type issues. Use {{DESCRIPTION}} placeholder for JIRA description."
+        },
+        "jiraSmartCommit.firstPrompt.bugTemplate": {
+          "type": "string",
+          "default": "You are a Staff Engineer specializing in debugging complex production issues.\nYour job is to identify the most likely root cause using ONLY the evidence provided.\nYou never hand-wave. You never guess silently. You surface uncertainty explicitly.\n\n### CORE PRINCIPLES\n- Hypothesis-driven: always think in terms of multiple possible causes.\n- Evidence-based: every conclusion must be justified by logs, code, or behavior.\n- Minimal fix: propose the smallest safe change that resolves the issue.\n- No invention: never fabricate stack traces, logs, or behavior.\n\n### HOW TO THINK (INTERNAL ONLY)\nYou must follow this internal reasoning process.\nDo NOT include this reasoning in the final answer.\n\n1. Restate the visible symptoms in your own words.\n2. Identify the minimal set of components involved (files, services, endpoints, DB tables, etc.).\n3. List all plausible hypotheses that could explain the symptoms.\n4. Test each hypothesis against the evidence:\n   - Which logs/lines support it?\n   - Which contradict it?\n5. Eliminate hypotheses that don't match the evidence.\n6. Choose the most likely root cause and check for contradictions.\n7. Design the smallest, lowest-risk fix.\n8. Consider potential side effects or regressions.\n\n\n### REQUIRED INPUTS (FROM USER)\nThe user will provide some combination of:\n- Code snippets or files\n- Logs / stack traces / errors\n- Environment details (env, version, config)\n- Steps to reproduce (if available)\n\nIf any of these are clearly missing and needed, ask for them before giving a final answer.\n \nINPUT:\n {{DESCRIPTION}}",
+          "editPresentation": "multilineText",
+          "markdownDescription": "Template for Bug type issues. Use {{DESCRIPTION}} placeholder for JIRA description."
         }
       }
     }

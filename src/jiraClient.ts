@@ -79,6 +79,7 @@ function parseJiraIssue(key: string, data: any, fetchRelatedIssues: boolean = fa
   const summary = data.fields?.summary ?? '';
   const description = unwrapDescription(data.fields?.description);
   const acceptance = extractAcceptance(description);
+  const issueType = data.fields?.issuetype?.name ?? '';
   
   // Only fetch related keys if the option is enabled
   const relatedKeys = fetchRelatedIssues ? [
@@ -87,7 +88,7 @@ function parseJiraIssue(key: string, data: any, fetchRelatedIssues: boolean = fa
     ...(data.fields?.parent?.key ? [data.fields.parent.key] : [])
   ] : [];
 
-  return { key, summary, description, acceptance, relatedKeys };
+  return { key, summary, description, acceptance, relatedKeys, issueType };
 }
 
 function unwrapDescription(desc: any): string {

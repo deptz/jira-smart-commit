@@ -6,4 +6,5 @@ export type JiraIssue = {
   acceptance: string[];
   relatedKeys: string[];
   testCases?: string;  // Optional test cases field for PR descriptions
+  issueType?: string;  // Issue type (e.g., Task, Bug, Story)
 };

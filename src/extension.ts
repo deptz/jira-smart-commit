@@ -11,6 +11,7 @@ import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
 import { resetApiKey, setApiKeyViaSettings } from './aiKeyManager';
 import { generatePRDescriptionCommand } from './commands/generatePRDescription';
+import { firstPromptGeneratorCommand } from './commands/firstPromptGenerator';
 
 const exec = promisify(cpExec);
 
@@ -33,7 +34,8 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.resetApiKey', () => withHandledErrors(resetApiKey(context))),
     vscode.commands.registerCommand('jiraSmartCommit.setApiKey', () => withHandledErrors(setApiKeyViaSettings())),
     vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context))),
-    vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand()))
+    vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.firstPromptGenerator', () => withHandledErrors(firstPromptGeneratorCommand()))
   );
   
   // Listen for active text editor changes to update status bar for multi-root workspaces
