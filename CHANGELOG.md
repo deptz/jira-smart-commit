@@ -1,6 +1,30 @@
 
 # Changelog
 
+## 0.3.4 (2025-11-15)
+
+#### **GPT-5.1 Support** - Added support for OpenAI's latest flagship model
+- **New OpenAI Models** - Added GPT-5.1 and GPT-5 Nano to the model selection
+  - **GPT-5.1**: Latest flagship model with enhanced reasoning capabilities and improved performance
+  - **GPT-5 Nano**: High-throughput, cost-optimized model for simple tasks
+  - Both models are part of OpenAI's new GPT-5 family with advanced capabilities
+
+- **Enhanced OpenAI Provider** - Optimized implementation for GPT-5 models
+  - **Responses API Integration**: GPT-5.1 uses the new Responses API for better performance and lower latency
+  - **Parameter Compatibility**: Automatic handling of parameter differences for GPT-5 models (no temperature support)
+  - **Optimal Settings**: Pre-configured with `reasoning: none` for fast responses and `verbosity: medium` for clear commit messages
+  - **Backward Compatibility**: All existing OpenAI models continue to work with Chat Completions API
+
+- **Smart API Selection** - Automatically chooses the best API endpoint
+  - GPT-5.1 uses Responses API for enhanced performance
+  - All other models continue using Chat Completions API
+  - Seamless fallback ensures reliability across model types
+
+### 🔧 Configuration
+- Select `"gpt-5.1"` or `"gpt-5-nano"` in VS Code settings under `jiraSmartCommit.ai.model`
+- No additional configuration needed - provider automatically optimizes API calls
+- GPT-5.1 recommended for complex commit message generation with superior reasoning
+
 ## 0.3.3 (2025-11-08)
 
 #### **Moonshot AI Support** - Added support for Kimi (Moonshot AI) provider
