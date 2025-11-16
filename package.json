@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
   "publisher": "triwibowo",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -473,6 +473,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Model override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.model. Higher-quality models (GPT-5.1, GPT-4, Claude Sonnet) recommended for better PR descriptions."
+        },
+        "jiraSmartCommit.firstPrompt.autoSubmit": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Automatically submit prompt to GitHub Copilot Chat. If false, prompt will be copied to clipboard for manual submission."
         },
         "jiraSmartCommit.firstPrompt.taskTemplate": {
           "type": "string",

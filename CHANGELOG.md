@@ -1,6 +1,21 @@
 
 # Changelog
 
+## 0.3.6 (2025-11-16)
+
+### 🔧 Improvements
+- **Enhanced Issue Type Detection** - Improved template selection logic for First Prompt Generator
+  - Added support for Sub-task/Subtask issues (uses Task template)
+  - Added support for Fast Track/Fasttrack/Incident issues (uses Bug template)
+  - Normalized matching handles spaces and hyphens automatically
+  - All other issue types default to Task template
+
+- **Configurable Prompt Submission** - Control how prompts are sent to GitHub Copilot Chat
+  - Added `jiraSmartCommit.firstPrompt.autoSubmit` setting (default: `false`)
+  - When enabled (`true`): Prompt is automatically submitted to Copilot Chat
+  - When disabled (`false`): Prompt is pasted into chat input for manual review and submission
+  - Gives users control over reviewing prompts before sending
+
 ## 0.3.5 (2025-11-15)
 
 #### **First Prompt Generator** - Generate prompts from JIRA issues for GitHub Copilot Chat

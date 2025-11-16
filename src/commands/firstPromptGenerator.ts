@@ -26,14 +26,17 @@ function getTemplateForIssueType(issueType: string): string {
   const bugTemplate = cfg.get<string>('bugTemplate', '');
   
   // Normalize issue type to lowercase for comparison
-  const normalizedType = issueType.toLowerCase();
+  const normalizedType = issueType.toLowerCase().replace(/[\s-]/g, '');
   
-  // Check if it's a bug
-  if (normalizedType.includes('bug') || normalizedType.includes('defect')) {
+  // Check if it's a bug-related issue
+  if (normalizedType.includes('bug') || 
+      normalizedType.includes('defect') || 
+      normalizedType.includes('fasttrack') || 
+      normalizedType.includes('incident')) {
     return bugTemplate;
   }
   
-  // Default to task template for Story, Task, Epic, etc.
+  // Default to task template for Story, Task, Sub-task, Epic, etc.
   return taskTemplate;
 }
 
@@ -110,17 +113,30 @@ export async function firstPromptGeneratorCommand(): Promise<void> {
     // Step 7: Fill template with JIRA description
     const prompt = fillTemplate(template, issue.description, issue.summary, issue.key);
     
-    // Step 8: Send prompt to GitHub Copilot Chat
-    // Using the VS Code Chat API to pre-fill the chat input
-    await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+    // Step 8: Submit prompt based on configuration
+    const promptCfg = vscode.workspace.getConfiguration('jiraSmartCommit.firstPrompt');
+    const autoSubmit = promptCfg.get<boolean>('autoSubmit', true);
     
-    // Insert the prompt into the chat input
-    // Note: This uses the chat participant API
-    await vscode.commands.executeCommand('workbench.action.chat.open', {
-      query: prompt
-    });
-    
-    vscode.window.showInformationMessage(`✓ First prompt generated for ${jiraKey} (${issueType})`);
+    if (autoSubmit) {
+      // Auto-submit: Send prompt directly to GitHub Copilot Chat and submit
+      await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+      await vscode.commands.executeCommand('workbench.action.chat.open', {
+        query: prompt
+      });
+      vscode.window.showInformationMessage(`✓ First prompt submitted to Copilot Chat for ${jiraKey} (${issueType})`);
+    } else {
+      // Manual mode: Copy to clipboard and open chat - user can paste with Cmd/Ctrl+V
+      await vscode.env.clipboard.writeText(prompt);
+      await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+      
+      // Small delay to ensure chat panel is focused
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Paste from clipboard into the chat input
+      await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
+      
+      vscode.window.showInformationMessage(`✓ First prompt pasted to Copilot Chat for ${jiraKey} (${issueType}). Review and press Enter to submit.`);
+    }
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

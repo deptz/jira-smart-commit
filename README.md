@@ -3,6 +3,22 @@
 
 Generate high-quality, Conventional Commit messages from **staged Git changes** and **JIRA tickets** (summary, description, acceptance criteria, relations). Optionally **polish with AI** while keeping credentials secure via **VS Code SecretStorage**.
 
+### Usage
+
+1. Work on a branch with a JIRA key (e.g., `feature/PRJ-123-add-login`, `bugfix/PRJ-456-fix-crash`)
+2. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+3. Run **"JIRA Smart Commit: Generate First Prompt"**
+4. Extension extracts JIRA key, fetches issue details, and generates an optimized prompt
+5. Prompt is sent to GitHub Copilot Chat (auto-submit or manual mode based on settings)
+
+### Configuration
+
+- `jiraSmartCommit.firstPrompt.autoSubmit` (default: `false`) - Control prompt submission:
+  - `false`: Paste prompt into chat input for manual review and submission
+  - `true`: Automatically submit prompt to Copilot Chat
+- `jiraSmartCommit.firstPrompt.taskTemplate` - Customize the template for Task/Story issues
+- `jiraSmartCommit.firstPrompt.bugTemplate` - Customize the template for Bug issues
+
 ## 📝 Conventional Commits 1.0.0
 
 This extension follows the **[Conventional Commits 1.0.0](https://www.conventionalcommits.org/)** specification exactly.
@@ -164,7 +180,21 @@ $ git add infrastructure/repository/user_repo.go
 - Offline fallback if JIRA is unreachable (uses diff-only)
 - **Multi-root workspace support** - works seamlessly with monorepos and multiple Git projects
 
-### PR Description Generation (NEW in v0.3.0) 🚀
+## First Prompt Generator for Github Copilot Chat
+**Generate prompts from JIRA issues for GitHub Copilot Chat** - Transform JIRA tickets into structured, context-rich prompts optimized for AI-assisted development.
+
+### Key Features
+
+- **🎯 One-Command Workflow** - Extract JIRA key from your Git branch, fetch issue details, and generate a prompt ready for Copilot Chat
+- **📋 Issue Type-Aware Templates** - Different prompt strategies for different work types:
+  - **Task/Story**: Architecture-first feature implementation with design thinking
+  - **Bug**: Hypothesis-driven debugging with root cause analysis
+  - **Customizable**: Edit templates via settings to match your team's workflow
+- **🔍 Smart Issue Type Detection** - Automatically recognizes Sub-tasks, Fast Track, and Incident issues
+- **🗂️ Multi-Repository Support** - Seamlessly works in workspaces with multiple Git repositories
+- **⚙️ Flexible Submission** - Choose between auto-submit or manual review before sending to Copilot
+
+### PR Description Generation
 - **5 mandatory sections** with quality scoring (0-100 points, A-F grades)
 - **AI enhancement** with 3 levels (minimal/balanced/detailed)
 - **Multi-platform support** (Bitbucket, GitHub, GitLab)
