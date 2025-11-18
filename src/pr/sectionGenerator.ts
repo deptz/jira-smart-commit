@@ -57,7 +57,8 @@ export function generateChangesSection(context: PRContext): string {
     for (const commit of commits) {
       const cleanMsg = getCleanMessage(commit.message);
       const breaking = isBreakingChange(commit) ? ' ⚠️ **BREAKING**' : '';
-      lines.push(`- ${cleanMsg}${breaking} (${commit.hash})`);
+      const shortHash = commit.hash.substring(0, 7); // Display shortened hash
+      lines.push(`- ${cleanMsg}${breaking} (${shortHash})`);
     }
   }
   

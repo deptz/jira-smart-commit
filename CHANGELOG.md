@@ -1,6 +1,39 @@
 
 # Changelog
 
+## 0.3.7 (2025-11-18)
+
+### 🔄 Major Changes
+- **PR Description Generator Refactored** - Migrated from AI providers to GitHub Copilot Chat
+  - Now uses GitHub Copilot Chat exclusively (same as First Prompt Generator)
+  - Removed AI provider configuration for PR descriptions (`pr.ai.*` settings)
+  - Simplified workflow: Generate → Review in Copilot → Copy → Paste
+  - More consistent experience across all generation features
+
+### 🗑️ Removed Features
+- **PR Quality Scoring** - Removed scoring/validation system (no longer relevant with Copilot-based approach)
+  - Removed `jiraSmartCommit.pr.minScore` setting
+  - Removed `jiraSmartCommit.pr.targetPlatform` setting
+  - Removed unused configuration options: `branchPatternPreset`, `customBranchPatterns`, `defaultBaseBranches`, `includeTestInstructions`, `includeCoverage`
+  - Simplified codebase by removing validation, scoring, and formatting modules
+
+### ✨ Improvements
+- **Cleaner Configuration** - PR Description Generator now has minimal, focused settings:
+  - `jiraSmartCommit.pr.enabled` - Toggle feature (requires GitHub Copilot)
+  - `jiraSmartCommit.pr.promptTemplate` - Customizable template with `{{CONTEXT}}` placeholder
+  - `jiraSmartCommit.pr.autoSubmit` - Auto-submit or manual review mode
+
+- **Enhanced Documentation** - Updated README and HOW-TO-GUIDE to reflect new approach
+  - Clarified that GitHub Copilot is required for PR descriptions
+  - Removed outdated references to AI providers and scoring
+  - Fixed folder structure to show only existing files
+  - Updated configuration examples and best practices
+
+### 🔧 Technical Improvements
+- Removed unused modules: `scoreCalculator.ts`, `prValidator.ts`, `sectionGenerator.ts`, `prFormatter.ts`, `aiPREnhancer.ts`, `jiraExtractor.ts`
+- Simplified `prGenerator.ts` to focus on context building and Copilot integration
+- Cleaned up command handlers to remove validation/scoring UI
+
 ## 0.3.6 (2025-11-16)
 
 ### 🔧 Improvements

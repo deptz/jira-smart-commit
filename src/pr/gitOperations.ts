@@ -3,16 +3,34 @@ import { CommitInfo, FileChange } from './types';
 import { getBranchPatterns } from './configPresets';
 import { getGitAPI, pickRepository, RepositoryInfo } from '../utils';
 
+// Cache the selected repository for the current PR generation session
+let cachedRepository: RepositoryInfo | null = null;
+
 /**
  * Get the active Git repository for PR operations
  * @returns Repository info or throws error if none found
  */
 export async function getRepository(): Promise<RepositoryInfo> {
+  // Return cached repository if available
+  if (cachedRepository) {
+    return cachedRepository;
+  }
+  
   const repoInfo = await pickRepository();
   if (!repoInfo) {
     throw new Error('No Git repository found or selected');
   }
+  
+  // Cache the selected repository
+  cachedRepository = repoInfo;
   return repoInfo;
+}
+
+/**
+ * Clear the cached repository (call this when starting a new PR generation)
+ */
+export function clearRepositoryCache(): void {
+  cachedRepository = null;
 }
 
 /**
@@ -48,118 +66,220 @@ export function extractJiraKeyFromBranch(branchName: string): string | null {
 
 /**
  * Get base branch (target branch for PR)
- * Returns the tracking branch or configured default
+ * Since Git doesn't track which branch a branch was created from,
+ * we always prompt the user to select the target base branch
  */
 export async function getBaseBranch(currentBranch: string): Promise<string> {
-  const repoInfo = await getRepository();
-  const repo = repoInfo.repo;
-  
-  // Try to get upstream branch
-  const head = repo.state.HEAD;
-  if (head?.upstream) {
-    // Extract branch name from refs/remotes/origin/main
-    const upstreamName = head.upstream.name;
-    const parts = upstreamName.split('/');
-    return parts[parts.length - 1];
-  }
-  
-  // Fall back to common base branches
-  const defaultBranches = ['main', 'master', 'develop'];
-  const config = vscode.workspace.getConfiguration('jiraSmartCommit.pr');
-  const configuredBranches = config.get<string[]>('defaultBaseBranches', defaultBranches);
-  
-  // Check which base branch exists
-  const refs = await repo.getRefs();
-  for (const baseBranch of configuredBranches) {
-    const exists = refs.some((ref: any) => 
-      ref.name === baseBranch || ref.name === `origin/${baseBranch}`
-    );
-    if (exists) {
-      return baseBranch;
-    }
-  }
-  
-  // Default to 'main'
-  return 'main';
+  // Always prompt user to select base branch since:
+  // 1. Git doesn't track which branch a feature branch was created from
+  // 2. HEAD.upstream is the remote tracking branch (origin/feature-branch), not the parent branch
+  // 3. Users may want to target different base branches (main, develop, staging, etc.)
+  return await promptBaseBranchSelection(currentBranch);
 }
 
 /**
- * Get commit log between current branch and base branch
+ * Prompt user to select base branch
  */
-export async function getCommitLog(baseBranch: string): Promise<CommitInfo[]> {
+async function promptBaseBranchSelection(currentBranch: string): Promise<string> {
   const repoInfo = await getRepository();
   const repo = repoInfo.repo;
-  const currentBranch = await getCurrentBranch();
+  const refs = await repo.getRefs();
   
-  // Get commits that are in current branch but not in base
-  const log = await repo.log({
-    range: `${baseBranch}..${currentBranch}`,
-    maxEntries: 100
+  // Build list of available branches (exclude current branch and its remote)
+  const branches: string[] = [];
+  const currentBranchRemote = `origin/${currentBranch}`;
+  
+  // Add common remote branches (exclude current branch's remote tracking branch)
+  const remoteBranches = refs.filter((ref: any) => 
+    ref.name?.startsWith('origin/') && 
+    !ref.name.includes('HEAD') &&
+    ref.name !== currentBranchRemote
+  ).map((ref: any) => ref.name);
+  
+  branches.push(...remoteBranches);
+  
+  // Add local branches (exclude current branch)
+  const localBranches = refs.filter((ref: any) => 
+    ref.type === 0 && // Head type
+    !ref.name?.startsWith('origin/') &&
+    ref.name !== currentBranch
+  ).map((ref: any) => ref.name);
+  
+  branches.push(...localBranches);
+  
+  // Remove duplicates and sort (prioritize common base branches)
+  const uniqueBranches = [...new Set(branches)].filter(Boolean);
+  const commonBases = ['origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop'];
+  
+  const sortedBranches = uniqueBranches.sort((a, b) => {
+    const aIndex = commonBases.indexOf(a);
+    const bIndex = commonBases.indexOf(b);
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    return a.localeCompare(b);
   });
   
-  const commits: CommitInfo[] = log.map((commit: any) => ({
-    hash: commit.hash.substring(0, 7),
-    message: commit.message.split('\n')[0],
-    body: commit.message.split('\n').slice(1).join('\n').trim() || undefined,
-    author: commit.authorName || commit.authorEmail,
-    date: new Date(commit.authorDate || commit.commitDate),
-    files: [] // Files will be populated separately if needed
-  }));
+  if (sortedBranches.length === 0) {
+    throw new Error('No other branches found to compare with. Please create or fetch other branches first.');
+  }
   
-  return commits;
+  const result = await vscode.window.showQuickPick(
+    sortedBranches.map(branch => ({
+      label: `$(git-branch) ${branch}`,
+      description: commonBases.includes(branch) ? '(common base branch)' : '',
+      branch
+    })),
+    {
+      placeHolder: `Select base branch to compare '${currentBranch}' with`,
+      title: 'Select Base Branch for PR'
+    }
+  );
+  
+  if (!result) {
+    throw new Error('Base branch selection was cancelled');
+  }
+  
+  return result.branch;
 }
 
 /**
- * Get file changes between current branch and base branch
+ * Get commit log from the current branch
+ * @param maxCommits Maximum number of commits to retrieve (default: 50)
  */
-export async function getFileChanges(baseBranch: string): Promise<FileChange[]> {
+export async function getCommitLog(maxCommits: number = 50): Promise<CommitInfo[]> {
   const repoInfo = await getRepository();
   const repo = repoInfo.repo;
-  const currentBranch = await getCurrentBranch();
   
-  // Get diff between branches
-  const diff = await repo.diffBetween(baseBranch, currentBranch);
+  try {
+    // Get recent commits from current branch
+    const log = await repo.log({
+      maxEntries: maxCommits
+    });
+    
+    if (log.length === 0) {
+      throw new Error('No commits found on the current branch.');
+    }
+    
+    // Filter out merge commits and map to CommitInfo
+    const commits: CommitInfo[] = log
+      .filter((commit: any) => {
+        const message = commit.message.split('\n')[0];
+        // Exclude merge commits with common patterns
+        return !(
+          message.startsWith('Merge') ||
+          message.startsWith('Merged in') ||
+          message.startsWith('Merged PR') ||
+          message.match(/^Merge (branch|pull request|remote-tracking branch)/i)
+        );
+      })
+      .map((commit: any) => ({
+        hash: commit.hash, // Store full hash for Git operations
+        message: commit.message.split('\n')[0],
+        body: commit.message.split('\n').slice(1).join('\n').trim() || undefined,
+        author: commit.authorName || commit.authorEmail,
+        date: new Date(commit.authorDate || commit.commitDate),
+        files: [] // Files will be populated separately if needed
+      }));
+    
+    if (commits.length === 0) {
+      throw new Error('No non-merge commits found on the current branch.');
+    }
+    
+    return commits;
+  } catch (error: any) {
+    throw new Error(
+      `Failed to get commit log from current branch. ` +
+      `Original error: ${error.message || error}`
+    );
+  }
+}
+
+/**
+ * Get file changes from recent commits
+ * Analyzes files changed across the commit history by examining each commit
+ */
+export async function getFileChanges(commits: CommitInfo[]): Promise<FileChange[]> {
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
   
-  if (!diff) {
+  if (commits.length === 0) {
     return [];
   }
   
-  const changes: FileChange[] = diff.map((change: any) => {
-    let status: FileChange['status'] = 'modified';
-    let oldPath: string | undefined;
+  try {
+    const fileMap = new Map<string, FileChange>();
     
-    // Map Git status to our FileChange status
-    switch (change.status) {
-      case 0: // INDEX_MODIFIED
-      case 1: // INDEX_ADDED
-      case 5: // MODIFIED
-        status = 'modified';
-        break;
-      case 2: // INDEX_DELETED
-      case 6: // DELETED
-        status = 'deleted';
-        break;
-      case 3: // INDEX_RENAMED
-        status = 'renamed';
-        oldPath = change.originalUri?.fsPath;
-        break;
-      case 7: // UNTRACKED
-        status = 'added';
-        break;
-      default:
-        status = 'modified';
+    // Get all commits with their file changes
+    for (const commitInfo of commits) {
+      try {
+        // Get the full commit object with parents
+        const commit = await repo.getCommit(commitInfo.hash);
+        
+        if (commit && commit.parents && commit.parents.length > 0) {
+          // Get diff between this commit and its parent
+          const parentHash = commit.parents[0];
+          const changes = await repo.diffBetween(parentHash, commit.hash);
+          
+          if (changes && changes.length > 0) {
+            for (const change of changes) {
+              if (change.uri?.fsPath) {
+                let status: FileChange['status'] = 'modified';
+                let oldPath: string | undefined;
+                
+                // Map Git status to our FileChange status
+                switch (change.status) {
+                  case 0: // INDEX_MODIFIED
+                  case 1: // INDEX_ADDED
+                  case 5: // MODIFIED
+                    status = 'modified';
+                    break;
+                  case 2: // INDEX_DELETED
+                  case 6: // DELETED
+                    status = 'deleted';
+                    break;
+                  case 3: // INDEX_RENAMED
+                    status = 'renamed';
+                    oldPath = change.originalUri?.fsPath;
+                    break;
+                  case 7: // UNTRACKED
+                    status = 'added';
+                    break;
+                  default:
+                    status = 'modified';
+                }
+                
+                // Use the most recent status for each file
+                fileMap.set(change.uri.fsPath, {
+                  path: change.uri.fsPath,
+                  status,
+                  additions: 0,  // VS Code Git API doesn't provide these
+                  deletions: 0,
+                  oldPath
+                });
+              }
+            }
+          }
+        }
+      } catch (commitError) {
+        // Skip commits that can't be diffed (e.g., initial commit with no parent)
+        // This is normal for the first commit in a repository
+        continue;
+      }
     }
     
-    return {
-      path: change.uri.fsPath,
-      status,
-      additions: 0,  // VS Code Git API doesn't provide these
-      deletions: 0,
-      oldPath
-    };
-  });
-  
-  return changes;
+    const fileChanges = Array.from(fileMap.values());
+    
+    if (fileChanges.length === 0) {
+      console.warn(`No file changes detected across ${commits.length} commit(s). This might indicate an issue with commit analysis.`);
+    }
+    
+    return fileChanges;
+  } catch (error) {
+    // If getting file changes fails completely, return empty array
+    console.warn('Could not get file changes:', error);
+    return [];
+  }
 }
 
 /**

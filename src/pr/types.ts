@@ -53,6 +53,7 @@ export interface FileChange {
   status: 'added' | 'modified' | 'deleted' | 'renamed';
   additions?: number;
   deletions?: number;
+  oldPath?: string; // For renamed files
 }
 
 /**
@@ -77,7 +78,7 @@ export interface CommitGroups {
  */
 export interface PRContext {
   currentBranch: string;
-  baseBranch: string;
+  baseBranch?: string; // Optional - not needed when analyzing current branch commits directly
   jiraKey?: string;
   jiraIssue?: JiraIssue;
   commits: CommitInfo[];

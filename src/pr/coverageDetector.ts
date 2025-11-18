@@ -38,8 +38,8 @@ export async function detectSimpleCovCoverage(workspaceRoot: string): Promise<nu
     // Try to extract the overall coverage percentage
     const coverage = extractSimpleCovCoverage(data);
     return coverage;
-  } catch (error) {
-    console.log('Could not read SimpleCov coverage:', error);
+  } catch (error: any) {
+    // Coverage file doesn't exist - this is normal, return null
     return null;
   }
 }
@@ -105,8 +105,8 @@ export async function detectGoCoverage(workspaceRoot: string): Promise<number | 
     const content = await fs.promises.readFile(reportPath, 'utf-8');
     const coverage = parseGoCoverageOutput(content);
     return coverage;
-  } catch (error) {
-    console.log('Could not read Go coverage:', error);
+  } catch (error: any) {
+    // Coverage file doesn't exist - this is normal, return null
     return null;
   }
 }

@@ -282,8 +282,14 @@ export async function getGitAPI(): Promise<any> {
     ? gitExt.exports.getAPI(1) 
     : (await gitExt.activate(), gitExt.exports.getAPI(1));
   
-  if (!api || !api.repositories) {
-    throw new Error('Git API not available. Please ensure you have a Git repository open.');
+  if (!api) {
+    throw new Error('Git API not available. Please ensure Git is installed and the VS Code Git extension is enabled.');
+  }
+  
+  // Wait for repositories to be discovered (VS Code Git extension might need time to scan)
+  if (api.repositories && api.repositories.length === 0) {
+    // Give Git extension a moment to discover repositories
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
   return api;
@@ -337,8 +343,8 @@ export async function pickRepository(): Promise<RepositoryInfo | undefined> {
   try {
     const api = await getGitAPI();
     
-    if (!api.repositories?.length) {
-      throw new Error('No Git repositories found in workspace. Please open a folder with a Git repository.');
+    if (!api.repositories || api.repositories.length === 0) {
+      throw new Error('No Git repositories found in workspace. Please ensure:\n1. You have a folder open in VS Code\n2. The folder is a Git repository (contains .git folder)\n3. The VS Code Git extension is enabled');
     }
     
     // Single repo: use directly

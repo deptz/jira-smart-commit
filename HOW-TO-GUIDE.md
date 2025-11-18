@@ -13,6 +13,8 @@ Before running the Smart Commit, make sure you've configured the extension corre
 
 ## Enabling AI (Recommended)
 
+
+
 If you want to enhance your commits with AI suggestions, enable these options:
 
 | Setting | Description | Example |
@@ -62,19 +64,70 @@ If you're working with multiple Git repositories (monorepos):
 3. **Status Bar**: Shows current JIRA key and repository: `JIRA: ABC-123 (repo-name)`
 
 ### PR Description Generator
-Generate comprehensive pull request descriptions:
+Generate comprehensive, reviewer-ready pull request descriptions using GitHub Copilot Chat:
 
-1. Run command: **JIRA Smart Commit: Generate PR Description**
-2. The extension will:
-   - Extract JIRA key from your branch name
-   - Analyze your Git commits and changes
-   - Fetch JIRA issue details
-   - Generate structured PR description with 5 sections:
-     - Summary
-     - What Changed
-     - Testing
-     - Impact & Risks
-     - Additional Notes
+#### Quick Start
+
+1. **Sync your branch** (Important!):
+   ```bash
+   git fetch origin
+   git pull --ff-only  # or merge/rebase as appropriate
+   ```
+   The default prompt will refuse to generate if your branch is behind origin.
+
+2. **Run the command**: **JIRA Smart Commit: Generate PR Description**
+
+3. **Wait for analysis**:
+   - Extracts JIRA key from branch name
+   - Analyzes Git commits and file changes
+   - Fetches JIRA issue details
+   - Detects project language and test coverage
+   - Builds comprehensive context
+
+4. **Review in Copilot Chat**:
+   - Description is automatically sent to GitHub Copilot Chat
+   - Review the generated content
+
+5. **Copy and paste**:
+   - Copy from Copilot Chat (Cmd+C / Ctrl+C)
+   - Paste into your PR on GitHub/GitLab/Bitbucket/Azure DevOps
+
+#### What You Get
+
+The default prompt generates structured sections:
+- **Summary** - 2-3 sentence overview with JIRA reference
+- **What Changed** - Organized by category (backend, API, frontend, tests, infra, config, docs)
+- **Testing** - Clear steps, preconditions, expected results
+- **Impact & Risks** - Systems affected, breaking changes, performance/security implications
+- **Additional Notes** - Dependencies, config changes, deployment considerations
+- **Missing Context** - Gaps in information that need clarification
+
+#### Default Prompt Behavior
+
+The extension uses a **Staff Engineer-grade prompt** that:
+- ✅ **Blocks if branch is behind origin** - Ensures complete context
+- ✅ **Evidence-based only** - No speculation, only facts from diffs
+- ✅ **Precise technical language** - File paths, components, endpoints
+- ✅ **Proactive risk highlighting** - Breaking changes, migrations, side effects
+- ✅ **Explicit about gaps** - Flags missing or unclear information
+
+#### Configuration Options
+
+```json
+{
+  "jiraSmartCommit.pr.enabled": true,
+  "jiraSmartCommit.pr.autoSubmit": false,  // false = paste for review, true = auto-submit
+  "jiraSmartCommit.pr.promptTemplate": "Your custom template with {{CONTEXT}} placeholder"
+}
+```
+
+#### Customizing the Prompt Template
+
+To customize:
+1. Open Settings → Search for `jiraSmartCommit.pr.promptTemplate`
+2. Edit the template
+3. Use `{{CONTEXT}}` placeholder where commit/JIRA/coverage data should be inserted
+4. Include your own sections, rules, or output format
 
 ### Git Hooks Integration (Optional)
 Automate commit message generation with Git hooks:
@@ -142,9 +195,10 @@ Automate commit message generation with Git hooks:
 
 ### Performance Tips
 
-1. **Reduce AI Token Usage**: Lower `maxTokens` setting for faster responses
-2. **Use Local AI**: Configure Ollama for offline AI processing
-3. **Disable AI for Simple Commits**: Only enable AI for complex changes
+1. **Reduce AI Token Usage**: Lower `maxTokens` setting for faster commit message responses
+2. **Use Local AI**: Configure Ollama for offline AI processing for commits
+3. **Disable AI for Simple Commits**: Only enable AI for complex commit message generation
+4. **Sync before PR generation**: Always fetch and pull latest changes before generating PR descriptions
 
 ## 💡 Tips & Best Practices
 
@@ -159,10 +213,16 @@ Stage related changes together for better commit messages:
 - ✅ Stage all files related to one feature
 - ❌ Don't stage unrelated changes
 
-### AI Usage
+### AI Usage for Commits
 - **Complex Changes**: Enable AI for multi-file changes or refactoring
 - **Simple Changes**: Disable AI for typo fixes or minor updates
-- **Review AI Suggestions**: Always review generated messages before committing
+- **Review AI Suggestions**: Always review generated commit messages before committing
+
+### PR Description Generation
+- **Uses GitHub Copilot**: PR descriptions are generated using GitHub Copilot Chat (not configurable AI providers)
+- **Sync first**: Always run `git fetch && git pull` before generating PR descriptions
+- **Review output**: Check GitHub Copilot's generated description for accuracy
+- **Customize template**: Adjust the prompt template to match your team's standards
 
 ### Multi-Repository Workflows
 - Keep JIRA keys consistent across repositories
@@ -182,8 +242,6 @@ If you encounter issues:
 1. Check the **Output** panel in VS Code for detailed error messages
 2. Ensure all dependencies (Git extension) are installed
 3. Verify your JIRA credentials and permissions
-4. For AI issues, check your provider's API status and quotas
+4. For commit AI issues, check your provider's API status and quotas
 
 Your JIRA API token can be generated from [Atlassian Account Settings → API Tokens](https://id.atlassian.com/manage/api-tokens).
-
-AI suggestions work best when the context is clear — ensure your commit includes a valid ticket reference and descriptive changes.

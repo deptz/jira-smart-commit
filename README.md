@@ -195,14 +195,38 @@ $ git add infrastructure/repository/user_repo.go
 - **⚙️ Flexible Submission** - Choose between auto-submit or manual review before sending to Copilot
 
 ### PR Description Generation
-- **5 mandatory sections** with quality scoring (0-100 points, A-F grades)
-- **AI enhancement** with 3 levels (minimal/balanced/detailed)
-- **Multi-platform support** (Bitbucket, GitHub, GitLab)
-- **Smart analysis** (language detection, coverage detection, commit parsing)
-- **JIRA integration** (auto-extracts acceptance criteria, issue context)
-- **Quality validation** with improvement suggestions
-- **Platform-specific formatting** with PR title suggestions
-- **Multi-root workspace support** - select repository when working with multiple projects
+**Generate comprehensive PR descriptions using GitHub Copilot Chat** - Analyze your commits, diffs, and JIRA context to create structured, reviewer-ready pull request documentation.
+
+#### Key Features
+- **🤖 GitHub Copilot Integration** - Uses the same AI system as First Prompt Generator for consistency
+- **📊 Smart Context Analysis** - Analyzes commits, file changes, test coverage, and JIRA tickets
+- **📝 Customizable Prompts** - Configure your own template for PR description generation (use `{{CONTEXT}}` placeholder)
+- **⚙️ Flexible Workflow** - Auto-submit to Copilot or manual review mode
+- **🎯 JIRA Integration** - Automatically includes JIRA ticket context in prompts
+- **🔍 Language Detection** - Detects project language/framework for better context
+- **📈 Coverage Detection** - Includes test coverage data when available
+- **🛡️ Sync Validation** - Prompts ensure your branch is synced with origin before generating descriptions
+- **Multi-root workspace support** - Select repository when working with multiple projects
+
+#### How It Works
+1. **Run** → "JIRA Smart Commit: Generate PR Description"
+2. **Analyze** → Extension analyzes commits, file changes, JIRA ticket, and test coverage
+3. **Prompt** → Builds comprehensive context and sends to GitHub Copilot Chat (auto-submit or manual mode)
+4. **Review** → Review the generated description in Copilot Chat
+5. **Copy** → Copy the description (Cmd+C / Ctrl+C)
+6. **Paste** → Paste into your PR platform and submit
+
+#### Default Prompt Template
+The default template includes:
+- **Mandatory Sync Requirement** - Blocks generation if local branch is behind origin
+- **Evidence-Based Rules** - Only includes facts from actual diffs and commits
+- **Structured Sections** - Summary, What Changed, Testing, Impact & Risks, Additional Notes, Missing Context
+- **Staff Engineer Standards** - No fluff, no speculation, only engineering facts
+
+#### Configuration
+- `jiraSmartCommit.pr.enabled` - Enable/disable PR description generation (**requires GitHub Copilot**)
+- `jiraSmartCommit.pr.promptTemplate` - Customize the prompt template (use `{{CONTEXT}}` placeholder)
+- `jiraSmartCommit.pr.autoSubmit` (default: `false`) - Auto-submit to Copilot or manual review
 
 ### Multi-Root Workspace Support
 Working with **monorepos** or **multiple Git repositories** in one VS Code window? No problem!
@@ -264,17 +288,13 @@ jira-smart-commit/
 │  │  ├─ geminiProvider.ts
 │  │  ├─ ollamaProvider.ts
 │  │  └─ moonshotProvider.ts
-│  ├─ pr/                         # NEW: PR Description Generator
-│  │  ├─ commitAnalyzer.ts       # Analyze conventional commits
-│  │  ├─ sectionGenerator.ts     # Generate 5 mandatory sections
-│  │  ├─ scoreCalculator.ts      # Quality scoring (0-100)
-│  │  ├─ prValidator.ts          # Validation & quality checks
-│  │  ├─ prFormatter.ts          # Multi-platform formatting
-│  │  ├─ prGenerator.ts          # Main orchestrator
-│  │  ├─ aiPREnhancer.ts         # AI enhancement integration
+│  ├─ pr/                         # PR Description Generator
+│  │  ├─ prGenerator.ts          # Main orchestrator (uses GitHub Copilot)
+│  │  ├─ gitOperations.ts        # Git commands wrapper
 │  │  ├─ languageDetector.ts     # Language/framework detection
 │  │  ├─ coverageDetector.ts     # Test coverage analysis
-│  │  └─ jiraExtractor.ts        # JIRA data extraction
+│  │  ├─ configPresets.ts        # Configuration presets
+│  │  └─ types.ts                # Type definitions
 │  └─ commands/
 │     └─ generatePRDescription.ts # PR command handler
 ├─ media/preview.css
@@ -666,8 +686,8 @@ User clicks Cancel
 ---
 
 ## 🛣️ Roadmap / Ideas
-- ✅ PR description generator (✨ Completed in v0.3.0!)
-- ✅ AI enhancement for PR descriptions (✨ Completed in v0.3.0!)
+- ✅ PR description generator with GitHub Copilot (✨ Completed!)
+- ✅ First Prompt Generator for Copilot Chat (✨ Completed!)
 - JIRA Smart Commits (transition/commands)
 - More robust breaking-change detection
 - Inline code diff heuristics

@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
   "publisher": "triwibowo",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -369,110 +369,18 @@
         "jiraSmartCommit.pr.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Enable PR Description Generator feature."
+          "markdownDescription": "Enable PR Description Generator feature. **Requires GitHub Copilot** to be installed and active."
         },
-        "jiraSmartCommit.pr.branchPatternPreset": {
+        "jiraSmartCommit.pr.promptTemplate": {
           "type": "string",
-          "enum": [
-            "standard",
-            "feature-based",
-            "user-based",
-            "custom"
-          ],
-          "enumDescriptions": [
-            "Flexible pattern that searches anywhere in branch name (ABC-123)",
-            "Git-flow style with feature/bugfix/hotfix prefixes (feature/ABC-123-description)",
-            "User forks with JIRA keys (username/ABC-123-description)",
-            "Custom regex patterns (configure customBranchPatterns)"
-          ],
-          "default": "standard",
-          "markdownDescription": "Branch naming pattern preset for extracting JIRA keys."
+          "default": "You are a Staff Software Engineer and expert technical writer specializing in pull request documentation.\nYour job is to produce an accurate, reviewer-ready PR description based ONLY on the complete, up-to-date diff of the current branch.\n\n--------------------------------------------\n### MANDATORY SYNC REQUIREMENT (BLOCKING RULE)\n\nYou MUST ensure that the local branch is fully synced with its remote tracking branch\n(e.g. origin/<current-branch>) so that **all commits on origin are present locally**.\n\nThe intended workflow is:\n\n  git fetch origin\n  git pull --ff-only          # or an equivalent fast-forward from the remote tracking branch\n\nThe exact command may differ, but the invariant is:\n- The local HEAD is **not behind** its remote tracking branch.\n- There are **no missing commits** from origin on this branch.\n\nIf the context does NOT clearly indicate that:\n- the latest changes have been fetched from origin, AND\n- the local branch is up to date with its remote tracking branch (no \"behind X\" state),\n\nthen you MUST refuse to generate the PR description and instead return ONLY:\n\n\"The local branch is behind origin.  \nPlease sync your branch so that all commits from origin are present locally  \n(e.g. run `git fetch origin` and then fast-forward your current branch),  \nthen regenerate the PR context.\"\n\nYou MUST NOT proceed if there is any indication that local is behind origin.\n\n--------------------------------------------\n### BEHAVIOR RULES\n\n- Base ALL statements strictly on the diff after sync.\n- Never invent behavior, intentions, or business logic not visible in the context.\n- Prefer precise technical language: file paths, components, endpoints, modules.\n- Group changes into meaningful areas (backend, API, frontend, tests, infra, config, docs).\n- Explicitly call out risks, breaking changes, and missing context.\n- Keep output concise, scannable, and reviewer-focused.\n\n--------------------------------------------\n### INTERNAL REASONING (HIDDEN FROM OUTPUT)\n\n1. Confirm that the local branch is synced with its remote tracking branch (no missing commits from origin).\n2. Parse the diff: added/removed/modified/refactored files.\n3. Group changes into logical categories.\n4. Infer intent only when it is clearly supported by the changes.\n5. Identify impacted systems, risks, and dependencies.\n6. Detect gaps or missing information.\n\n--------------------------------------------\n### OUTPUT FORMAT (RETURN ONLY THIS)\n\n## Summary\n- 2–3 sentence overview of what changed.\n- Include JIRA ticket reference only if present in the context.\n- High-level technical impact.\n\n## What Changed\n- Group changes by category (backend, API, frontend, tests, infra, config, docs).\n- Each bullet references specific files/components and concrete changes.\n- No speculation.\n\n## Testing\n- Clear steps to test the changes.\n- Preconditions (accounts, flags, env, data).\n- Expected results.\n\n## Impact & Risks\n- Systems/components affected.\n- Breaking changes or migrations.\n- Performance/security implications.\n- Any uncertainty due to incomplete context.\n\n## Additional Notes\n- Dependencies or follow-up work.\n- Required config or environment changes.\n- Deployment considerations.\n\n## Missing Context\n- Anything the diff does not make clear (e.g. business purpose, external dependencies).\n- Questions the reviewer or author should clarify.\n\n--------------------------------------------\n### CONTEXT\n{{CONTEXT}}",
+          "editPresentation": "multilineText",
+          "markdownDescription": "Template for PR description generation. Use {{CONTEXT}} placeholder for commits, diffs, JIRA data, and coverage information."
         },
-        "jiraSmartCommit.pr.customBranchPatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Custom regex patterns with capture groups for JIRA key extraction. Example: `^release/([A-Z]+-\\d+)`. Only used when preset is 'custom'."
-        },
-        "jiraSmartCommit.pr.defaultBaseBranches": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "main",
-            "master",
-            "develop"
-          ],
-          "markdownDescription": "Default base branches to compare against when generating PR descriptions."
-        },
-        "jiraSmartCommit.pr.includeTestInstructions": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Include language-specific test instructions in PR description (Rails/Go)."
-        },
-        "jiraSmartCommit.pr.includeCoverage": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Include test coverage information if available (SimpleCov/go test)."
-        },
-        "jiraSmartCommit.pr.minScore": {
-          "type": "number",
-          "default": 85,
-          "minimum": 0,
-          "maximum": 100,
-          "markdownDescription": "Minimum quality score required for PR description (0-100). Score is calculated based on mandatory sections and content quality."
-        },
-        "jiraSmartCommit.pr.targetPlatform": {
-          "type": "string",
-          "enum": [
-            "bitbucket",
-            "github",
-            "gitlab"
-          ],
-          "default": "bitbucket",
-          "markdownDescription": "Target platform for PR description formatting. Bitbucket format is default."
-        },
-        "jiraSmartCommit.pr.ai.enabled": {
+        "jiraSmartCommit.pr.autoSubmit": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable AI enhancement for PR descriptions. Uses existing AI provider configuration (jiraSmartCommit.ai.*)."
-        },
-        "jiraSmartCommit.pr.ai.enhanceLevel": {
-          "type": "string",
-          "enum": [
-            "minimal",
-            "balanced",
-            "detailed"
-          ],
-          "enumDescriptions": [
-            "Minimal: Fix grammar and spelling only, minimal rewording",
-            "Balanced: Improve clarity and flow, add helpful context (recommended)",
-            "Detailed: Comprehensive explanations with architectural context"
-          ],
-          "default": "balanced",
-          "markdownDescription": "Level of AI enhancement to apply to PR descriptions."
-        },
-        "jiraSmartCommit.pr.ai.provider": {
-          "type": "string",
-          "enum": [
-            "",
-            "openai",
-            "azure-openai",
-            "anthropic",
-            "gemini",
-            "ollama",
-            "moonshot"
-          ],
-          "default": "",
-          "markdownDescription": "AI provider override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.provider."
-        },
-        "jiraSmartCommit.pr.ai.model": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Model override for PR enhancement. Leave empty to inherit from jiraSmartCommit.ai.model. Higher-quality models (GPT-5.1, GPT-4, Claude Sonnet) recommended for better PR descriptions."
+          "markdownDescription": "Automatically submit PR description to GitHub Copilot Chat. If false, will show preview for manual review."
         },
         "jiraSmartCommit.firstPrompt.autoSubmit": {
           "type": "boolean",
