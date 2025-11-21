@@ -1,6 +1,32 @@
 
 # Changelog
 
+## 0.3.8 (2025-11-24)
+
+### ✨ New Features
+- **Gemini 3 Pro Support** - Added support for Google's latest Gemini 3 Pro model
+  - Access via `gemini-3-pro-preview`
+  - Removed deprecated Gemini 1.5 and 2.0 models to keep the list clean
+  
+- **GPT Codex Support** - Added support for OpenAI's specialized coding models
+  - **Models**: `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5-codex`
+  - **Optimized Integration**: Uses OpenAI's Responses API with specific parameter tuning (no verbosity, adaptive reasoning)
+  - Perfect for generating highly technical and accurate commit messages
+
+- **Repository-Level Configuration** - Share settings across your team
+  - Create a `.jira-smart-commit.json` file in your repository root
+  - Override settings like `commitTemplate`, `scopeStrategy`, and `ai.model`
+  - **Security**: Sensitive fields like `baseUrl` and `email` are ignored in repo config
+
+- **Pre-commit Hook Generator** - Enforce commit standards automatically
+  - New command: `JIRA Smart Commit: Install Pre-commit Hook`
+  - Installs a local Git hook to validate commit messages against Conventional Commits
+  - Ensures all team members follow the same commit format
+
+### 🔧 Improvements
+- **Robust API Handling** - Improved OpenAI provider to handle nested Responses API structures
+- **Model Cleanup** - Removed outdated models to streamline configuration
+
 ## 0.3.7 (2025-11-18)
 
 ### 🔄 Major Changes
