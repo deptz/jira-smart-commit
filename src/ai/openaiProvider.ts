@@ -3,30 +3,39 @@ import fetch from 'node-fetch';
 import { AiClient, AIConfig, AIPayload } from './aiProvider';
 
 export class OpenAIClient implements AiClient {
-  constructor(private cfg: AIConfig, private apiKey: string) {}
+  constructor(private cfg: AIConfig, private apiKey: string) { }
 
   private isGPT5Model(model: string): boolean {
     return model.startsWith('gpt-5') || model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4');
   }
 
+  private isResponsesApi(model: string): boolean {
+    return model === 'gpt-5.1' || model.includes('codex');
+  }
+
   async generateCommit(p: AIPayload): Promise<string> {
     const base = this.cfg.baseUrl?.replace(/\/$/, '') || 'https://api.openai.com/v1';
     const isGPT5 = this.isGPT5Model(this.cfg.model);
-    
-    // Use Responses API for GPT-5.1 for better performance, fallback to Chat Completions for others
-    const url = `${base}/${isGPT5 && this.cfg.model === 'gpt-5.1' ? 'responses' : 'chat/completions'}`;
+
+    // Use Responses API for GPT-5.1 and Codex for better performance, fallback to Chat Completions for others
+    const useResponses = this.isResponsesApi(this.cfg.model);
+    const url = `${base}/${useResponses ? 'responses' : 'chat/completions'}`;
 
     let requestBody: any;
 
-    if (isGPT5 && this.cfg.model === 'gpt-5.1') {
-      // Use Responses API for GPT-5.1 with optimal settings
+    if (useResponses) {
+      // Use Responses API for GPT-5.1/Codex with optimal settings
       requestBody = {
         model: this.cfg.model,
         input: `${p.system}\n\n${p.user}`,
-        max_output_tokens: this.cfg.maxTokens,
-        reasoning: { effort: "none" }, // Fast responses for commit generation
-        text: { verbosity: "medium" }   // Balanced verbosity for clear commit messages
+        max_output_tokens: this.cfg.maxTokens
       };
+
+      // Add reasoning for GPT-5.1 (non-Codex)
+      if (!this.cfg.model.includes('codex')) {
+        requestBody.reasoning = { effort: "none" };
+        requestBody.text = { verbosity: "medium" };
+      }
     } else {
       // Use Chat Completions API for other models
       requestBody = {
@@ -61,15 +70,26 @@ export class OpenAIClient implements AiClient {
     const json = await res.json();
     let out: string;
 
-    if (isGPT5 && this.cfg.model === 'gpt-5.1') {
+    if (useResponses) {
       // Handle Responses API response format
-      out = json.output_text?.trim();
+      // Structure: output -> [ { type: 'message', content: [ { type: 'output_text', text: '...' } ] } ]
+      const message = json.output?.find((o: any) => o.type === 'message');
+      const content = message?.content?.find((c: any) => c.type === 'output_text');
+      out = content?.text?.trim();
+
+      // Fallback if not found (e.g. older format or different model behavior)
+      if (!out) {
+        out = json.output_text?.trim();
+      }
     } else {
       // Handle Chat Completions API response format
       out = json.choices?.[0]?.message?.content?.trim();
     }
 
-    if (!out) throw new Error('OpenAI returned no content.');
+    if (!out) {
+      console.error('OpenAI Response JSON:', JSON.stringify(json, null, 2));
+      throw new Error('OpenAI returned no content. Check debug console for details.');
+    }
     return out;
   }
 }
