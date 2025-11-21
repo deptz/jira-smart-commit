@@ -166,6 +166,44 @@ Automate commit message generation with Git hooks:
 }
 ````
 
+## 🤝 Team Collaboration
+
+### Repository Configuration
+
+You can share configuration settings with your team by creating a `.jira-smart-commit.json` file in the root of your repository. This ensures everyone uses the same commit templates, scope detection strategies, and AI models.
+
+**1. Create the file:**
+Create a file named `.jira-smart-commit.json` in your project root.
+
+**2. Add configuration:**
+```json
+{
+  "jiraSmartCommit.scopeStrategy": "folder",
+  "jiraSmartCommit.firstPrompt.taskTemplate": "As a developer, I want to...",
+  "jiraSmartCommit.ai.model": "gpt-5.1",
+  "jiraSmartCommit.commitTemplate": "${type}(${scope}): ${jira.key} - ${jira.summary}"
+}
+```
+
+**Security Note:**
+For security reasons, the following sensitive settings **cannot** be set via repository configuration and must be configured locally by each user:
+- `jiraSmartCommit.baseUrl`
+- `jiraSmartCommit.email`
+- API Tokens (JIRA and AI)
+
+### Pre-commit Hooks
+
+To ensure all commits follow the Conventional Commits standard, you can install a local pre-commit hook. This hook validates every commit message before it is finalized.
+
+**Installation:**
+1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+2. Run command: **`JIRA Smart Commit: Install Pre-commit Hook`**.
+
+**How it works:**
+- The extension installs a script in your `.git/hooks/` directory.
+- When you run `git commit`, the hook checks if your message follows the format: `<type>(<scope>): <description>`.
+- If the format is incorrect, the commit is blocked, and an error message is displayed with examples.
+
 ## 🚨 Troubleshooting
 
 ### Common Issues
