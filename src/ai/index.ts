@@ -6,6 +6,7 @@ import { AnthropicClient } from './anthropicProvider';
 import { GeminiClient } from './geminiProvider';
 import { OllamaClient } from './ollamaProvider';
 import { MoonshotClient } from './moonshotProvider';
+import { TeamGatewayClient } from './teamGatewayProvider';
 import { getApiKey } from '../aiKeyManager';
 
 export async function getAiClient(context: vscode.ExtensionContext, cfg: AIConfig): Promise<AiClient> {
@@ -32,6 +33,18 @@ export async function getAiClient(context: vscode.ExtensionContext, cfg: AIConfi
     case 'moonshot': {
       const key = await getApiKey(context, 'Moonshot');
       return new MoonshotClient(cfg, key);
+    }
+    case 'team-gateway': {
+      // Check if authentication is required for team gateway
+      const { getAIConfigWithTeamDefaults } = await import('../aiConfigManager');
+      const aiConfigWithDefaults = getAIConfigWithTeamDefaults();
+      
+      if (aiConfigWithDefaults.teamGatewayRequiresAuth) {
+        const key = await getApiKey(context, 'Team Gateway');
+        return new TeamGatewayClient(cfg, key);
+      }
+      
+      return new TeamGatewayClient(cfg);
     }
     default:
       throw new Error(`Unsupported provider: ${cfg.provider}`);

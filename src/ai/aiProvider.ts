@@ -1,6 +1,6 @@
 
 export type AIConfig = {
-  provider: 'openai' | 'azure-openai' | 'anthropic' | 'gemini' | 'ollama' | 'moonshot';
+  provider: 'openai' | 'azure-openai' | 'anthropic' | 'gemini' | 'ollama' | 'moonshot' | 'team-gateway';
   model: string;
   baseUrl?: string;
   maxTokens: number;

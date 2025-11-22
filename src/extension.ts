@@ -233,17 +233,21 @@ async function generate(context: vscode.ExtensionContext, progress?: vscode.Prog
 
   progress?.report({ message: 'Preparing AI request...', increment: 10 });
 
+  // Import AI config manager for team gateway support
+  const { getAIConfigWithTeamDefaults } = await import('./aiConfigManager');
+  const aiConfigWithDefaults = getAIConfigWithTeamDefaults(cwd);
+
   const aiCfg: AIConfig = {
-    provider: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<any>('provider', 'openai'),
-    model: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('model', 'gpt-4o-mini')!,
-    baseUrl: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('baseUrl', ''),
-    maxTokens: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<number>('maxTokens', 256)!,
-    temperature: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<number>('temperature', 0.2)!,
-    systemPrompt: vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('systemPrompt', '')!
+    provider: aiConfigWithDefaults.provider,
+    model: aiConfigWithDefaults.model,
+    baseUrl: aiConfigWithDefaults.baseUrl,
+    maxTokens: aiConfigWithDefaults.maxTokens,
+    temperature: aiConfigWithDefaults.temperature,
+    systemPrompt: aiConfigWithDefaults.systemPrompt
   };
 
-  const format = vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<'conventional' | 'plain'>('format', 'conventional')!;
-  const lang = vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('language', 'en')!;
+  const format = aiConfigWithDefaults.format;
+  const lang = aiConfigWithDefaults.language;
   const defaultSystem = `You are a senior software engineer writing precise, concise commit messages following the Conventional Commits 1.0.0 specification.
 
 Conventional Commits structure:
@@ -358,7 +362,7 @@ ${commitHistoryText ? '6' : '5'}) If breaking === true, add footer after blank l
 Staged changes:
 ${stagedChangesText}`;
 
-  const userTemplate = vscode.workspace.getConfiguration('jiraSmartCommit.ai').get<string>('userPromptTemplate', '')!;
+  const userTemplate = aiConfigWithDefaults.userPromptTemplate;
   const user = userTemplate?.trim() ? applyUserTemplate(userTemplate, {
     format, lang, type, scope, breaking,
     issue, diff, stagedChangesText, descriptionText, acceptanceCriteriaText, commitHistoryText

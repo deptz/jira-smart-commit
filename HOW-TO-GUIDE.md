@@ -13,17 +13,39 @@ Before running the Smart Commit, make sure you've configured the extension corre
 
 ## Enabling AI (Recommended)
 
-
-
 If you want to enhance your commits with AI suggestions, enable these options:
 
 | Setting | Description | Example |
 |---------|-------------|---------|
 | **AI: Enabled** | Check this to enable AI support | ☑️ |
 | **AI: Model** | Choose your preferred LLM model | e.g., `gpt-5`, `claude-sonnet-4-5`, `gemini-2.5-pro` |
-| **AI: Provider** | Select the provider that matches the model | e.g., OpenAI, Anthropic, Google, Moonshot |
+| **AI: Provider** | Select the provider that matches the model | e.g., OpenAI, Anthropic, Google, Moonshot, or `team-gateway` |
 | **AI: Temperature** | Set the temperature configuration. | ⚠️ Note: Only for OpenAI GPT-5, must be set to 1.0|
 | **AI: Max Tokens** | Defines how much context (tokens) the AI can use to analyze your commit. Set this higher to include more context, including file diffs, for better AI suggestions. | e.g. 1000 or higher |
+
+### Team Gateway (For Organizations)
+
+For teams that want centralized LLM access with cost tracking and consistent configuration:
+
+**Quick Setup:**
+```json
+// .jira-smart-commit.json (commit to repo)
+{
+  "ai": {
+    "provider": "team-gateway",
+    "baseUrl": "https://gateway.yourteam.com/v1",
+    "model": "gpt-4o"
+  }
+}
+```
+
+**Benefits:**
+- ✅ Single endpoint for entire team
+- ✅ Centralized cost tracking and monitoring
+- ✅ Consistent AI experience across team
+- ✅ Compliance and security control
+
+📚 **Full Guide:** [TEAM-GATEWAY-GUIDE.md](./TEAM-GATEWAY-GUIDE.md) - Includes deployment examples, Docker setup, and troubleshooting
 
 ## 🪄 How to Run a JIRA Smart Commit
 

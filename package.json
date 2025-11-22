@@ -199,10 +199,11 @@
             "anthropic",
             "gemini",
             "ollama",
-            "moonshot"
+            "moonshot",
+            "team-gateway"
           ],
           "default": "openai",
-          "description": "LLM provider to use."
+          "description": "LLM provider to use. Use 'team-gateway' to connect to a centralized team gateway."
         },
         "jiraSmartCommit.ai.model": {
           "type": "string",
@@ -330,7 +331,12 @@
         "jiraSmartCommit.ai.baseUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Optional custom base URL (Azure/OpenAI-compatible proxy or Ollama, e.g., `http://localhost:11434`)."
+          "markdownDescription": "Optional custom base URL (Azure/OpenAI-compatible proxy, Ollama, or Team Gateway, e.g., `http://localhost:11434` or `https://gateway.yourteam.com/v1`)."
+        },
+        "jiraSmartCommit.ai.teamGatewayRequiresAuth": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Whether the team gateway requires authentication. If true, you will be prompted for an API key that will be sent as a Bearer token."
         },
         "jiraSmartCommit.ai.maxTokens": {
           "type": "number",

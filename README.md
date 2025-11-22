@@ -65,11 +65,13 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 
 ### AI Settings
 *   `jiraSmartCommit.ai.enabled`: Enable AI post-processing (Default: `false`).
-*   `jiraSmartCommit.ai.provider`: Choose `openai`, `anthropic`, `gemini`, `ollama`, `azure-openai`, or `moonshot`.
+*   `jiraSmartCommit.ai.provider`: Choose `openai`, `anthropic`, `gemini`, `ollama`, `azure-openai`, `moonshot`, or `team-gateway`.
 *   `jiraSmartCommit.ai.model`: Select your model (e.g., `gpt-5.1`, `claude-4-5-sonnet`, `gemini-3-pro-preview`, `gpt-5.1-codex`).
+*   `jiraSmartCommit.ai.baseUrl`: Custom endpoint URL (for proxies, Ollama, or Team Gateway).
 
 ### Team Collaboration
 *   **Repository Config**: Create a `.jira-smart-commit.json` in your root to share settings (templates, rules) with your team.
+*   **Team Gateway**: Use a centralized LLM gateway for cost tracking and consistent configuration. See [TEAM-GATEWAY-GUIDE.md](./TEAM-GATEWAY-GUIDE.md) for setup.
 *   **Pre-commit Hook**: Run **`JIRA Smart Commit: Install Pre-commit Hook`** to enforce commit standards locally.
 
 ---

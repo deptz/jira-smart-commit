@@ -1,0 +1,29 @@
+{
+  "ai": {
+    "provider": "team-gateway",
+    "baseUrl": "https://gateway.yourteam.com/v1",
+    "model": "gpt-5.1",
+    "maxTokens": 1024,
+    "temperature": 1,
+    "teamGatewayRequiresAuth": false,
+    "systemPrompt": "You are a senior software engineer writing precise, concise commit messages.",
+    "userPromptTemplate": "",
+    "format": "conventional",
+    "language": "en"
+  },
+  "pr": {
+    "promptTemplate": "",
+    "autoSubmit": false
+  },
+  "firstPrompt": {
+    "autoSubmit": false,
+    "taskTemplate": "",
+    "bugTemplate": ""
+  },
+  "enableConventionalCommits": true,
+  "detectBreakingChanges": true,
+  "scopeStrategy": "auto",
+  "fetchRelatedIssues": false,
+  "jiraKeyPosition": "footer",
+  "commitTemplate": ""
+}

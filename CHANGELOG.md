@@ -3,7 +3,23 @@
 
 ## 0.3.8 (2025-11-24)
 
+### 🎯 Major New Feature: Team Gateway Support
+
+- **Centralized LLM Gateway** - Connect to a single team-managed gateway instead of individual provider APIs
+  - New provider type: `team-gateway` for centralized AI endpoint
+  - Teams can standardize on the same provider/model across all developers
+  - Centralized cost tracking, usage monitoring, and compliance
+  - Gateway can implement caching for common responses
+  
+- **Repository-Level Configuration** - Share settings across your team via `.jira-smart-commit.json`
+  - **Team AI Configuration**: Share AI settings across team (`provider`, `model`, `baseUrl`, `maxTokens`, `temperature`)
+  - **Repository Settings**: Override workspace settings like `commitTemplate`, `scopeStrategy`, `jiraKeyPosition`
+  - **Configuration Precedence**: User settings > Team config > Defaults (allows individual overrides when needed)
+  - **Security**: Sensitive fields like `baseUrl` and `email` are ignored in repo config
+  - **API Keys**: Individual API keys remain secure in VS Code SecretStorage (never committed to version control)
+
 ### ✨ New Features
+
 - **Gemini 3 Pro Support** - Added support for Google's latest Gemini 3 Pro model
   - Access via `gemini-3-pro-preview`
   - Removed deprecated Gemini 1.5 and 2.0 models to keep the list clean
@@ -13,19 +29,28 @@
   - **Optimized Integration**: Uses OpenAI's Responses API with specific parameter tuning (no verbosity, adaptive reasoning)
   - Perfect for generating highly technical and accurate commit messages
 
-- **Repository-Level Configuration** - Share settings across your team
-  - Create a `.jira-smart-commit.json` file in your repository root
-  - Override settings like `commitTemplate`, `scopeStrategy`, and `ai.model`
-  - **Security**: Sensitive fields like `baseUrl` and `email` are ignored in repo config
-
 - **Pre-commit Hook Generator** - Enforce commit standards automatically
   - New command: `JIRA Smart Commit: Install Pre-commit Hook`
   - Installs a local Git hook to validate commit messages against Conventional Commits
   - Ensures all team members follow the same commit format
 
-### 🔧 Improvements
-- **Robust API Handling** - Improved OpenAI provider to handle nested Responses API structures
-- **Model Cleanup** - Removed outdated models to streamline configuration
+### 🔧 Technical Details
+
+- New client: `src/ai/teamGatewayProvider.ts` with OpenAI-compatible API support
+- New config manager: `src/aiConfigManager.ts` for team AI settings
+- Configuration precedence: User settings > Team config > Defaults
+- Improved OpenAI provider to handle nested Responses API structures
+- Backward compatible: Existing configurations work without changes
+
+### 🏢 Use Cases
+
+Perfect for teams that want to:
+- Control costs and track usage centrally
+- Enforce compliance and security policies
+- Provide consistent AI experience across team
+- Use internal/self-hosted LLM infrastructure
+- Cache responses for better performance
+- Monitor and analyze AI usage patterns
 
 ## 0.3.7 (2025-11-18)
 
