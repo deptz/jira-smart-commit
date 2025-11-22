@@ -6,7 +6,7 @@ import { fetchIssue } from './jiraClient';
 import { analyzeStaged, DiffSummary } from './diffAnalyzer';
 import { renderTemplate } from './template';
 import { getConfig, ensureApiToken, inferScope, guessTypeFromDiff, detectBreaking, resetJiraApiToken, Config, pickRepository, getActiveRepository, escapeShellArg } from './utils';
-import { JiraIssue } from './types';
+import { JiraIssue, UsageMetadata } from './types';
 import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
 import { resetApiKey, setApiKeyViaSettings } from './aiKeyManager';
@@ -373,12 +373,11 @@ ${stagedChangesText}`;
     const client = await getAiClient(context, aiCfg);
     
     // Construct usage metadata for tracking (if team gateway is enabled)
-    const { UsageMetadata } = await import('./types');
     const { randomUUID } = await import('crypto');
     const branchName = await currentBranch(cwd);
     const repositoryName = cwd.split('/').pop() || 'unknown';
     
-    const metadata: typeof UsageMetadata = {
+    const metadata: UsageMetadata = {
       metadataVersion: '1.0',
       feature: 'commit',
       user: cfg.email,
