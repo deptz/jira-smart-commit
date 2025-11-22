@@ -72,6 +72,7 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 ### Team Collaboration
 *   **Repository Config**: Create a `.jira-smart-commit.json` in your root to share settings (templates, rules) with your team.
 *   **Team Gateway**: Use a centralized LLM gateway for cost tracking and consistent configuration. See [TEAM-GATEWAY-GUIDE.md](./TEAM-GATEWAY-GUIDE.md) for setup.
+*   **Usage Tracking**: Monitor team usage of commit generation, PR descriptions, and first prompts with optional metadata collection (opt-in with team gateway).
 *   **Pre-commit Hook**: Run **`JIRA Smart Commit: Install Pre-commit Hook`** to enforce commit standards locally.
 
 ---
