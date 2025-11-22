@@ -371,7 +371,25 @@ ${stagedChangesText}`;
   try {
     progress?.report({ message: `Calling ${aiCfg.provider} AI (${aiCfg.model})...`, increment: 40 });
     const client = await getAiClient(context, aiCfg);
-    let aiOut = await callAI(client, { system, user });
+    
+    // Construct usage metadata for tracking (if team gateway is enabled)
+    const { UsageMetadata } = await import('./types');
+    const { randomUUID } = await import('crypto');
+    const branchName = await currentBranch(cwd);
+    const repositoryName = cwd.split('/').pop() || 'unknown';
+    
+    const metadata: typeof UsageMetadata = {
+      metadataVersion: '1.0',
+      feature: 'commit',
+      user: cfg.email,
+      timestamp: new Date().toISOString(),
+      requestId: randomUUID(),
+      jiraKey: issue?.key,
+      repository: repositoryName,
+      branch: branchName
+    };
+    
+    let aiOut = await callAI(client, { system, user, metadata });
     aiOut = aiOut.trim();
 
     progress?.report({ message: 'Finalizing commit message...', increment: 20 });

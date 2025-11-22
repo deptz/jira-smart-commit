@@ -22,7 +22,26 @@ export class TeamGatewayClient implements AiClient {
       headers['authorization'] = `Bearer ${this.apiKey}`;
     }
 
-    const requestBody = {
+    // Add usage tracking metadata headers if provided
+    if (p.metadata) {
+      headers['x-feature-type'] = p.metadata.feature;
+      headers['x-metadata-version'] = p.metadata.metadataVersion;
+      headers['x-user-email'] = p.metadata.user;
+      headers['x-request-id'] = p.metadata.requestId;
+      headers['x-timestamp'] = p.metadata.timestamp;
+      
+      if (p.metadata.jiraKey) {
+        headers['x-jira-key'] = p.metadata.jiraKey;
+      }
+      if (p.metadata.repository) {
+        headers['x-repository'] = p.metadata.repository;
+      }
+      if (p.metadata.branch) {
+        headers['x-branch'] = p.metadata.branch;
+      }
+    }
+
+    const requestBody: any = {
       model: this.cfg.model,
       max_tokens: this.cfg.maxTokens,
       temperature: this.cfg.temperature,
@@ -31,6 +50,11 @@ export class TeamGatewayClient implements AiClient {
         { role: 'user', content: p.user }
       ]
     };
+
+    // Include metadata in request body if provided
+    if (p.metadata) {
+      requestBody.metadata = p.metadata;
+    }
 
     const res = await fetch(url, {
       method: 'POST',

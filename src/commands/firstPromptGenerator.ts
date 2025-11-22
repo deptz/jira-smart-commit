@@ -110,6 +110,41 @@ export async function firstPromptGeneratorCommand(): Promise<void> {
     const issueType = issue.issueType || 'Task';
     const template = getTemplateForIssueType(issueType);
     
+    // Send usage tracking data (team gateway only, fire-and-forget)
+    try {
+      const { sendTrackingData } = await import('../telemetry');
+      const { randomUUID } = await import('crypto');
+      const repositoryName = repoInfo.cwd.split('/').pop() || 'unknown';
+      const fullConfig = getConfig(repoInfo.cwd);
+      
+      // Determine template type based on issue type
+      const templateType: 'task' | 'bug' = 
+        issueType.toLowerCase().includes('bug') || 
+        issueType.toLowerCase().includes('defect') || 
+        issueType.toLowerCase().includes('fasttrack') || 
+        issueType.toLowerCase().includes('incident') ? 'bug' : 'task';
+      
+      await sendTrackingData(context, {
+        metadataVersion: '1.0',
+        feature: 'firstPrompt',
+        user: cfg.email,
+        timestamp: new Date().toISOString(),
+        requestId: randomUUID(),
+        jiraKey: jiraKey,
+        repository: repositoryName,
+        branch: branchName,
+        issueType: issueType,
+        templateType: templateType
+      }, {
+        enableUsageTracking: fullConfig.enableUsageTracking,
+        trackingUrl: fullConfig.trackingUrl,
+        trackingRequiresAuth: fullConfig.trackingRequiresAuth,
+        anonymizeUser: fullConfig.anonymizeUser
+      });
+    } catch (error) {
+      // Tracking should never disrupt the main flow - fail silently
+    }
+    
     // Step 7: Fill template with JIRA description
     const prompt = fillTemplate(template, issue.description, issue.summary, issue.key);
     

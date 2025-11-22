@@ -1,7 +1,7 @@
 
 # Changelog
 
-## 0.3.8 (2025-11-24)
+## 0.3.8 (2025-11-22)
 
 ### 🎯 Major New Feature: Team Gateway Support
 
@@ -34,12 +34,24 @@
   - Installs a local Git hook to validate commit messages against Conventional Commits
   - Ensures all team members follow the same commit format
 
+- **Usage Tracking** - Track team usage of commit generation, PR descriptions, and first prompts
+  - Optional metadata collection when team gateway is enabled
+  - Tracks feature usage: commit generation, PR descriptions, first prompts
+  - Metadata includes: user email, JIRA key, repository, branch, timestamps
+  - Sends to separate `/api/tracking` endpoint (configurable)
+  - Fire-and-forget with 5-second timeout, fails silently
+  - Privacy: SHA-256 email hashing when `anonymizeUser: true`
+  - Schema version 1.0 for forward compatibility
+  - Works with PR/First Prompt using GitHub Copilot Chat (no AI provider change)
+
 ### 🔧 Technical Details
 
 - New client: `src/ai/teamGatewayProvider.ts` with OpenAI-compatible API support
 - New config manager: `src/aiConfigManager.ts` for team AI settings
+- New telemetry module: `src/telemetry.ts` with usage tracking and SHA-256 hashing
 - Configuration precedence: User settings > Team config > Defaults
 - Improved OpenAI provider to handle nested Responses API structures
+- Usage tracking integrated in: commit generation, PR generation, first prompt generation
 - Backward compatible: Existing configurations work without changes
 
 ### 🏢 Use Cases

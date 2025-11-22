@@ -229,6 +229,43 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
     coverage: coverage || undefined
   };
   
+  // Send usage tracking data (team gateway only, fire-and-forget)
+  try {
+    const { sendTrackingData } = await import('../telemetry');
+    const { getConfig } = await import('../utils');
+    const { randomUUID } = await import('crypto');
+    const extensionContext = (global as any).extensionContext;
+    const repositoryName = workspaceRoot.split('/').pop() || 'unknown';
+    
+    if (extensionContext) {
+      const cfg = getConfig(workspaceRoot);
+      const jiraConfig = vscode.workspace.getConfiguration('jiraSmartCommit');
+      const userEmail = jiraConfig.get('email', '') as string;
+      
+      await sendTrackingData(extensionContext, {
+        metadataVersion: '1.0',
+        feature: 'pr',
+        user: userEmail,
+        timestamp: new Date().toISOString(),
+        requestId: randomUUID(),
+        jiraKey: jiraKey || undefined,
+        repository: repositoryName,
+        branch: currentBranch,
+        commitsAnalyzed: commits.length,
+        filesChanged: fileChanges.length,
+        language: language?.language,
+        coverageDetected: !!coverage
+      }, {
+        enableUsageTracking: cfg.enableUsageTracking,
+        trackingUrl: cfg.trackingUrl,
+        trackingRequiresAuth: cfg.trackingRequiresAuth,
+        anonymizeUser: cfg.anonymizeUser
+      });
+    }
+  } catch (error) {
+    // Tracking should never disrupt the main flow - fail silently
+  }
+  
   // Step 8: Get template and generate prompt
   const template = config.get('promptTemplate', '') as string;
   const prompt = fillPRTemplate(template, context);

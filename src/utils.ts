@@ -21,6 +21,11 @@ export type Config = {
   includeCommitHistory: boolean;
   commitHistoryLimit: number;
   jiraKeyPosition: 'footer' | 'subject-prefix' | 'subject-suffix';
+  // Usage tracking (team config only)
+  enableUsageTracking: boolean;
+  trackingUrl: string;
+  trackingRequiresAuth: boolean;
+  anonymizeUser: boolean;
 };
 
 export function getConfig(cwd?: string): Config {
@@ -43,6 +48,11 @@ export function getConfig(cwd?: string): Config {
     includeCommitHistory: cfg.get<boolean>('includeCommitHistory', true)!,
     commitHistoryLimit: Math.min(cfg.get<number>('commitHistoryLimit', 5)!, 10), // Cap at 10
     jiraKeyPosition: cfg.get<'footer' | 'subject-prefix' | 'subject-suffix'>('jiraKeyPosition', 'footer')!,
+    // Usage tracking defaults (team config only, not from user settings)
+    enableUsageTracking: true,
+    trackingUrl: '/api/tracking',
+    trackingRequiresAuth: false,
+    anonymizeUser: false,
   };
 
   if (cwd) {

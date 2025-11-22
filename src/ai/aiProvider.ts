@@ -1,4 +1,6 @@
 
+import { UsageMetadata } from '../types';
+
 export type AIConfig = {
   provider: 'openai' | 'azure-openai' | 'anthropic' | 'gemini' | 'ollama' | 'moonshot' | 'team-gateway';
   model: string;
@@ -11,6 +13,7 @@ export type AIConfig = {
 export type AIPayload = {
   system: string;
   user: string;
+  metadata?: UsageMetadata;
 };
 
 export interface AiClient {
