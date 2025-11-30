@@ -75,6 +75,12 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Usage Tracking**: Monitor team usage of commit generation, PR descriptions, and first prompts with optional metadata collection (opt-in with team gateway).
 *   **Pre-commit Hook**: Run **`JIRA Smart Commit: Install Pre-commit Hook`** to enforce commit standards locally.
 
+### Security Review
+*   **Security Analysis**: Use **`JIRA Smart Commit: Review Security`** to analyze all commits on your current branch for security vulnerabilities.
+*   **Configuration**: `jiraSmartCommit.security.enabled` - Enable/disable security review feature.
+*   **Behavior**: Security review analyzes ALL commits on the current branch (no limit, no base branch comparison needed).
+*   **Integration**: Uses GitHub Copilot Chat for security analysis. Requires GitHub Copilot to be installed and active.
+
 ---
 
 ## 🌍 Supported Languages

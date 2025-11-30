@@ -1,6 +1,18 @@
 
 # Changelog
 
+## 0.3.9 (2025-XX-XX)
+
+### ✨ New Feature: Security Review
+
+- **Security Review** - Analyze all commits on your branch for security vulnerabilities using GitHub Copilot Chat
+  - New command: **`JIRA Smart Commit: Review Security`** to perform comprehensive security analysis
+  - Analyzes ALL commits on the current branch (no limit, no base branch comparison needed)
+  - Matches PR Description behavior: comprehensive analysis of all branch changes
+  - Uses OWASP Top 10 and additional security categories for thorough vulnerability detection
+  - Configurable via `jiraSmartCommit.security.enabled` and `jiraSmartCommit.security.promptTemplate`
+  - Integrates with GitHub Copilot Chat for AI-powered security analysis
+
 ## 0.3.8 (2025-11-22)
 
 ### 🎯 Major New Feature: Team Gateway Support

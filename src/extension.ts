@@ -12,6 +12,7 @@ import { AIConfig } from './ai/aiProvider';
 import { resetApiKey, setApiKeyViaSettings } from './aiKeyManager';
 import { generatePRDescriptionCommand } from './commands/generatePRDescription';
 import { firstPromptGeneratorCommand } from './commands/firstPromptGenerator';
+import { reviewSecurityCommand } from './commands/reviewSecurity';
 
 import { installPreCommitHookCommand } from './commands/hookGenerator';
 
@@ -38,6 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context))),
     vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.firstPromptGenerator', () => withHandledErrors(firstPromptGeneratorCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.reviewSecurity', () => withHandledErrors(reviewSecurityCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.installHook', () => withHandledErrors(installPreCommitHookCommand()))
   );
 

@@ -102,6 +102,14 @@ export type TeamFirstPromptConfig = {
 };
 
 /**
+ * Security-specific configuration that can be shared across team
+ */
+export type TeamSecurityConfig = {
+  promptTemplate?: string;
+  autoSubmit?: boolean;
+};
+
+/**
  * Get PR configuration with team defaults
  */
 export function getPRConfigWithTeamDefaults(cwd?: string): {
@@ -150,6 +158,31 @@ export function getFirstPromptConfigWithTeamDefaults(cwd?: string): {
     autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false,
     taskTemplate: userConfig.get<string>('taskTemplate') || teamConfig?.taskTemplate || '',
     bugTemplate: userConfig.get<string>('bugTemplate') || teamConfig?.bugTemplate || ''
+  };
+}
+
+/**
+ * Get Security configuration with team defaults
+ */
+export function getSecurityConfigWithTeamDefaults(cwd?: string): {
+  promptTemplate: string;
+  autoSubmit: boolean;
+} {
+  const userConfig = vscode.workspace.getConfiguration('jiraSmartCommit.security');
+  
+  // Load team config if available
+  let teamConfig: TeamSecurityConfig | undefined;
+  if (cwd) {
+    const config = loadFullTeamConfig(cwd);
+    teamConfig = config?.security;
+  } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const config = loadFullTeamConfig(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    teamConfig = config?.security;
+  }
+
+  return {
+    promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
+    autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false
   };
 }
 
