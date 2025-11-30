@@ -85,6 +85,74 @@ If you're working with multiple Git repositories (monorepos):
 2. **Repository Picker**: When multiple repos are detected, you'll see a picker to select the target repository
 3. **Status Bar**: Shows current JIRA key and repository: `JIRA: ABC-123 (repo-name)`
 
+### Test Coverage Enforcement
+Ensure ≥90% test coverage on all changed code using GitHub Copilot Chat:
+
+#### Quick Start
+
+1. **Make your code changes** (last commit + staged + unstaged changes will be analyzed)
+
+2. **Run the command**: **JIRA Smart Commit: Enforce Test Coverage**
+
+3. **Review in Copilot Chat**:
+   - Test coverage analysis is automatically sent to GitHub Copilot Chat
+   - GitHub Copilot automatically detects all changes and analyzes coverage
+   - Review the generated test plan and coverage gaps
+
+4. **Follow the recommendations**:
+   - Create or update test files as suggested
+   - Run the provided coverage commands
+   - Ensure ≥90% coverage on changed lines and branches
+
+#### What You Get
+
+The default prompt generates comprehensive analysis:
+- **Inferred Stack Per File** - Language, test framework, test command, coverage engine, base branch
+- **Diff-Based Test Plan** - Changed files, changed logic segments, mandatory test cases
+- **Test Implementation Plan** - Files to create/update, exact test structures & assertions
+- **Coverage Enforcement Instructions** - Exact commands to run, expected coverage, coverage gaps
+- **Remaining Untestable Lines** - Any lines that cannot be tested with explanations
+
+#### Supported Languages & Frameworks
+
+- **Go**: `testing` framework, `go test -coverprofile=coverage.out`
+- **Ruby**: RSpec (if `spec/` exists) or Minitest, SimpleCov
+- **JavaScript/TypeScript**: Jest (priority), Vitest, Mocha, Istanbul/nyc
+- **Python**: pytest, `coverage.py` or `pytest-cov`, `diff-cover`
+- **PHP**: PHPUnit, Xdebug + PHPUnit (Clover XML)
+
+#### Configuration Options
+
+```json
+{
+  "jiraSmartCommit.testCoverage.enabled": true,
+  "jiraSmartCommit.testCoverage.autoSubmit": false,  // false = paste for review, true = auto-submit
+  "jiraSmartCommit.testCoverage.promptTemplate": "Your custom template"
+}
+```
+
+#### Customizing the Prompt Template
+
+To customize:
+1. Open Settings → Search for `jiraSmartCommit.testCoverage.promptTemplate`
+2. Edit the template (or use team config in `.jira-smart-commit.json`)
+3. GitHub Copilot will automatically detect changes - no placeholders needed
+4. Include your own rules, coverage thresholds, or output format
+
+#### Team Configuration
+
+Share test coverage settings with your team:
+
+```json
+// .jira-smart-commit.json
+{
+  "testCoverage": {
+    "promptTemplate": "Your team's custom test coverage prompt",
+    "autoSubmit": false
+  }
+}
+```
+
 ### PR Description Generator
 Generate comprehensive, reviewer-ready pull request descriptions using GitHub Copilot Chat:
 
@@ -283,6 +351,14 @@ Stage related changes together for better commit messages:
 - **Sync first**: Always run `git fetch && git pull` before generating PR descriptions
 - **Review output**: Check GitHub Copilot's generated description for accuracy
 - **Customize template**: Adjust the prompt template to match your team's standards
+
+### Test Coverage Enforcement
+- **Uses GitHub Copilot**: Test coverage analysis uses GitHub Copilot Chat (not configurable AI providers)
+- **Automatic detection**: GitHub Copilot automatically detects all changes (last commit + staged + unstaged)
+- **No manual diff needed**: Copilot has full repository access and detects changes automatically
+- **Multi-language**: Supports Go, Ruby, JavaScript/TypeScript, PHP, and Python with automatic framework detection
+- **Review recommendations**: Always review the generated test plan and coverage gaps before implementing
+- **Customize template**: Adjust the prompt template to match your team's coverage standards and thresholds
 
 ### Multi-Repository Workflows
 - Keep JIRA keys consistent across repositories

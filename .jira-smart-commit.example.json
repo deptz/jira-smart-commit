@@ -24,6 +24,14 @@
     "taskTemplate": "",
     "bugTemplate": ""
   },
+  "testCoverage": {
+    "promptTemplate": "",
+    "autoSubmit": false
+  },
+  "security": {
+    "promptTemplate": "",
+    "autoSubmit": false
+  },
   "enableConventionalCommits": true,
   "detectBreakingChanges": true,
   "scopeStrategy": "auto",

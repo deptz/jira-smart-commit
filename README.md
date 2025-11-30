@@ -40,6 +40,13 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 2.  The extension analyzes all commits, file changes, and the JIRA ticket.
 3.  **Result**: A structured PR description is generated in GitHub Copilot Chat, ready to copy-paste into GitHub/GitLab/Bitbucket.
 
+### 4. Quality: Enforce Test Coverage
+*Ensure ≥90% test coverage on all changed code.*
+
+1.  Run command: **`JIRA Smart Commit: Enforce Test Coverage`**.
+2.  GitHub Copilot automatically detects all changes (last commit + staged + unstaged).
+3.  **Result**: A comprehensive test coverage analysis and enforcement plan is generated in Copilot Chat, ensuring all changed lines and branches are covered.
+
 ---
 
 ## ✨ Key Features
@@ -49,7 +56,9 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 | **🤖 AI-Powered Commits** | Uses OpenAI (GPT-5.1, Codex), Anthropic (Claude), Gemini (Pro), or Ollama to write commit messages. |
 | **📝 Conventional Commits** | Strictly enforces the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/) standard. |
 | **🔗 JIRA Integration** | Fetches summary, description, and acceptance criteria to provide context to the AI. |
-| **💬 Copilot Integration** | Generates optimized prompts for GitHub Copilot Chat for planning and PRs. |
+| **💬 Copilot Integration** | Generates optimized prompts for GitHub Copilot Chat for planning, PRs, security, and test coverage. |
+| **🧪 Test Coverage Enforcement** | Ensures ≥90% test coverage on all changed code with multi-language support (Go, Ruby, JS/TS, PHP, Python). |
+| **🔒 Security Review** | Analyzes all commits for security vulnerabilities using OWASP Top 10 and additional categories. |
 | **🏢 Team Config** | Share settings via `.jira-smart-commit.json` and enforce rules with pre-commit hooks. |
 | **🔐 Secure** | API keys are stored in **VS Code SecretStorage** (Keychain), never in plain text. |
 | **📂 Multi-Repo** | Seamlessly supports monorepos and multi-root workspaces. |
@@ -80,6 +89,14 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Configuration**: `jiraSmartCommit.security.enabled` - Enable/disable security review feature.
 *   **Behavior**: Security review analyzes ALL commits on the current branch (no limit, no base branch comparison needed).
 *   **Integration**: Uses GitHub Copilot Chat for security analysis. Requires GitHub Copilot to be installed and active.
+
+### Test Coverage Enforcement
+*   **Test Coverage Analysis**: Use **`JIRA Smart Commit: Enforce Test Coverage`** to ensure ≥90% test coverage on all changed code.
+*   **Configuration**: `jiraSmartCommit.testCoverage.enabled` - Enable/disable test coverage enforcement feature.
+*   **Multi-Language Support**: Automatically detects and supports Go, Ruby, JavaScript/TypeScript, PHP, and Python.
+*   **Automatic Detection**: Infers language, test framework, coverage tools, and base branch automatically.
+*   **Integration**: Uses GitHub Copilot Chat for test coverage analysis. Requires GitHub Copilot to be installed and active.
+*   **Customizable**: Configure prompt template via `jiraSmartCommit.testCoverage.promptTemplate` or team config.
 
 ---
 

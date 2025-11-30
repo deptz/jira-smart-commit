@@ -3,7 +3,7 @@
 
 ## 0.3.9 (2025-XX-XX)
 
-### ✨ New Feature: Security Review
+### ✨ New Features
 
 - **Security Review** - Analyze all commits on your branch for security vulnerabilities using GitHub Copilot Chat
   - New command: **`JIRA Smart Commit: Review Security`** to perform comprehensive security analysis
@@ -12,6 +12,16 @@
   - Uses OWASP Top 10 and additional security categories for thorough vulnerability detection
   - Configurable via `jiraSmartCommit.security.enabled` and `jiraSmartCommit.security.promptTemplate`
   - Integrates with GitHub Copilot Chat for AI-powered security analysis
+
+- **Test Coverage Enforcement** - Ensure ≥90% test coverage on all changed code using GitHub Copilot Chat
+  - New command: **`JIRA Smart Commit: Enforce Test Coverage`** to analyze and enforce test coverage
+  - Analyzes all code changes (last commit + staged + unstaged changes)
+  - Multi-language support: Go, Ruby, JavaScript/TypeScript, PHP, Python
+  - Automatic stack detection: infers language, test framework, and coverage tools
+  - Base branch auto-detection: PR base, upstream, or remote default branch
+  - Configurable via `jiraSmartCommit.testCoverage.enabled` and `jiraSmartCommit.testCoverage.promptTemplate`
+  - Integrates with GitHub Copilot Chat for AI-powered test coverage analysis
+  - Team config support: share prompt templates via `.jira-smart-commit.json`
 
 ## 0.3.8 (2025-11-22)
 

@@ -110,6 +110,14 @@ export type TeamSecurityConfig = {
 };
 
 /**
+ * TestCoverage-specific configuration that can be shared across team
+ */
+export type TeamTestCoverageConfig = {
+  promptTemplate?: string;
+  autoSubmit?: boolean;
+};
+
+/**
  * Get PR configuration with team defaults
  */
 export function getPRConfigWithTeamDefaults(cwd?: string): {
@@ -178,6 +186,31 @@ export function getSecurityConfigWithTeamDefaults(cwd?: string): {
   } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     const config = loadFullTeamConfig(vscode.workspace.workspaceFolders[0].uri.fsPath);
     teamConfig = config?.security;
+  }
+
+  return {
+    promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
+    autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false
+  };
+}
+
+/**
+ * Get TestCoverage configuration with team defaults
+ */
+export function getTestCoverageConfigWithTeamDefaults(cwd?: string): {
+  promptTemplate: string;
+  autoSubmit: boolean;
+} {
+  const userConfig = vscode.workspace.getConfiguration('jiraSmartCommit.testCoverage');
+  
+  // Load team config if available
+  let teamConfig: TeamTestCoverageConfig | undefined;
+  if (cwd) {
+    const config = loadFullTeamConfig(cwd);
+    teamConfig = config?.testCoverage;
+  } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const config = loadFullTeamConfig(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    teamConfig = config?.testCoverage;
   }
 
   return {
