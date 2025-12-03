@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import { generatePRDescriptionWithProgress } from '../pr/prGenerator';
+import { getPRConfigWithTeamDefaults } from '../aiConfigManager';
+import { getCurrentBranch, getRepositoryRoot } from '../pr/gitOperations';
+import { checkPrerequisites } from '../pr/prPrerequisites';
 
 /**
  * Command handler for Generate PR Description
@@ -17,7 +20,48 @@ export async function generatePRDescriptionCommand() {
       return;
     }
     
-    const autoSubmit = config.get('autoSubmit', false) as boolean;
+    // Get repository root for team config
+    let cwd: string | undefined;
+    try {
+      cwd = await getRepositoryRoot();
+    } catch (error) {
+      // If we can't get repository root, continue without it
+      console.warn('Could not get repository root:', error);
+    }
+    
+    // Load config with team defaults
+    const prConfig = getPRConfigWithTeamDefaults(cwd);
+    const requirePrerequisites = prConfig.requirePrerequisites;
+    
+    // Check prerequisites if enabled
+    if (requirePrerequisites) {
+      try {
+        const branchName = await getCurrentBranch();
+        const prerequisites = await checkPrerequisites(branchName);
+        
+        if (!prerequisites.met) {
+          const missingList = prerequisites.missing.join(' and ');
+          vscode.window.showErrorMessage(
+            `PR Description generation requires prerequisites to be completed first.\n\n` +
+            `Missing: ${missingList}\n\n` +
+            `Please run:\n` +
+            `- 'JIRA Smart Commit: Review Security' (if missing)\n` +
+            `- 'JIRA Smart Commit: Enforce Test Coverage' (if missing)\n\n` +
+            `You can disable this requirement in settings: jiraSmartCommit.pr.requirePrerequisites`
+          );
+          return;
+        }
+      } catch (error) {
+        // If we can't check prerequisites (e.g., no branch), show warning but continue
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.warn('Could not check prerequisites:', errorMsg);
+        vscode.window.showWarningMessage(
+          `Could not verify prerequisites: ${errorMsg}. Proceeding with PR generation.`
+        );
+      }
+    }
+    
+    const autoSubmit = prConfig.autoSubmit;
     
     // Show progress while generating
     try {

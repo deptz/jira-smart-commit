@@ -90,6 +90,7 @@ export function getAIConfigWithTeamDefaults(cwd?: string): {
 export type TeamPRConfig = {
   promptTemplate?: string;
   autoSubmit?: boolean;
+  requirePrerequisites?: boolean;
 };
 
 /**
@@ -123,6 +124,7 @@ export type TeamTestCoverageConfig = {
 export function getPRConfigWithTeamDefaults(cwd?: string): {
   promptTemplate: string;
   autoSubmit: boolean;
+  requirePrerequisites: boolean;
 } {
   const userConfig = vscode.workspace.getConfiguration('jiraSmartCommit.pr');
   
@@ -138,7 +140,8 @@ export function getPRConfigWithTeamDefaults(cwd?: string): {
 
   return {
     promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
-    autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false
+    autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false,
+    requirePrerequisites: userConfig.get<boolean>('requirePrerequisites') ?? teamConfig?.requirePrerequisites ?? true
   };
 }
 

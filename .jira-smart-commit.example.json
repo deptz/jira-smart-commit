@@ -17,7 +17,8 @@
   },
   "pr": {
     "promptTemplate": "",
-    "autoSubmit": false
+    "autoSubmit": false,
+    "requirePrerequisites": true
   },
   "firstPrompt": {
     "autoSubmit": false,

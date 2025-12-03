@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { reviewSecurityWithProgress } from '../pr/securityAnalyzer';
+import { getCurrentBranch } from '../pr/gitOperations';
+import { markSecurityCompleted } from '../pr/prPrerequisites';
 
 /**
  * Command handler for Security Review
@@ -43,6 +45,15 @@ export async function reviewSecurityCommand() {
         const mode = autoSubmit ? 'submitted' : 'pasted';
         const isMac = process.platform === 'darwin';
         const copyKey = isMac ? 'Cmd+C' : 'Ctrl+C';
+        
+        // Mark security review as completed for this branch
+        try {
+          const branchName = await getCurrentBranch();
+          await markSecurityCompleted(branchName);
+        } catch (error) {
+          // If we can't mark as completed (e.g., no branch), log warning but continue
+          console.warn('Could not mark security as completed:', error);
+        }
         
         vscode.window.showInformationMessage(
           `✓ Security review prompt ${mode} to Copilot Chat.\n\n` +

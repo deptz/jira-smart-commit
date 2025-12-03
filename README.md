@@ -36,9 +36,10 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 ### 3. Review: PR Description
 *Create a comprehensive Pull Request description ready for review.*
 
-1.  Run command: **`JIRA Smart Commit: Generate PR Description`**.
-2.  The extension analyzes all commits, file changes, and the JIRA ticket.
-3.  **Result**: A structured PR description is generated in GitHub Copilot Chat, ready to copy-paste into GitHub/GitLab/Bitbucket.
+1.  **Prerequisites** (if enabled): Complete Security Review and Test Coverage first.
+2.  Run command: **`JIRA Smart Commit: Generate PR Description`**.
+3.  The extension analyzes all commits, file changes, and the JIRA ticket.
+4.  **Result**: A structured PR description is generated in GitHub Copilot Chat, ready to copy-paste into GitHub/GitLab/Bitbucket.
 
 ### 4. Quality: Enforce Test Coverage
 *Ensure ≥90% test coverage on all changed code.*
@@ -97,6 +98,13 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Automatic Detection**: Infers language, test framework, coverage tools, and base branch automatically.
 *   **Integration**: Uses GitHub Copilot Chat for test coverage analysis. Requires GitHub Copilot to be installed and active.
 *   **Customizable**: Configure prompt template via `jiraSmartCommit.testCoverage.promptTemplate` or team config.
+
+### PR Description
+*   **Prerequisites Enforcement**: Require Security Review and Test Coverage to be completed before generating PR Description (default: enabled).
+*   **Configuration**: `jiraSmartCommit.pr.requirePrerequisites` - Enable/disable prerequisite requirement (default: `true`).
+*   **Team Config Support**: Configure via `.jira-smart-commit.json` to enforce prerequisites across your team.
+*   **Branch-Specific Tracking**: Completion status is tracked per branch, so each branch maintains its own prerequisite state.
+*   **Workflow**: Run Security Review and Test Coverage first, then generate PR Description. The extension tracks completion automatically.
 
 ---
 

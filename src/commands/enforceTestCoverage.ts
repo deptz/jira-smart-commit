@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { pickRepository } from '../utils';
 import { getTestCoverageConfigWithTeamDefaults } from '../aiConfigManager';
+import { markTestCoverageCompleted } from '../pr/prPrerequisites';
 
 /**
  * Main command function for Enforce Test Coverage
@@ -55,6 +56,15 @@ export async function enforceTestCoverageCommand(): Promise<void> {
       await vscode.commands.executeCommand('workbench.action.chat.open', {
         query: promptTemplate
       });
+      
+      // Mark test coverage as completed for this branch
+      try {
+        await markTestCoverageCompleted(branchName);
+      } catch (error) {
+        // If we can't mark as completed, log warning but continue
+        console.warn('Could not mark test coverage as completed:', error);
+      }
+      
       vscode.window.showInformationMessage(`✓ Test coverage enforcement prompt submitted to Copilot Chat for branch ${branchName}`);
     } else {
       // Manual mode: Copy to clipboard and open chat - user can paste with Cmd/Ctrl+V
@@ -66,6 +76,14 @@ export async function enforceTestCoverageCommand(): Promise<void> {
       
       // Paste from clipboard into the chat input
       await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
+      
+      // Mark test coverage as completed for this branch
+      try {
+        await markTestCoverageCompleted(branchName);
+      } catch (error) {
+        // If we can't mark as completed, log warning but continue
+        console.warn('Could not mark test coverage as completed:', error);
+      }
       
       vscode.window.showInformationMessage(`✓ Test coverage enforcement prompt pasted to Copilot Chat for branch ${branchName}. Review and press Enter to submit.`);
     }

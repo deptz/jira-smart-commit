@@ -1,9 +1,9 @@
 {
   "name": "jira-smart-commit",
   "displayName": "JIRA Smart Commit",
-  "description": "Generate Conventional Commit messages from staged changes and JIRA story context, with optional AI polishing. Uses VS Code SecretStorage for API keys.",
+  "description": "Automate your engineering workflow with JIRA context and AI. Generate high-quality Conventional Commits, structured PR Descriptions, and optimized Copilot Prompts directly from your JIRA tickets and staged changes.",
   "publisher": "triwibowo",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -401,6 +401,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Automatically submit PR description to GitHub Copilot Chat. If false, will show preview for manual review."
+        },
+        "jiraSmartCommit.pr.requirePrerequisites": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Require Security Review and Test Coverage to be completed before generating PR Description."
         },
         "jiraSmartCommit.firstPrompt.autoSubmit": {
           "type": "boolean",

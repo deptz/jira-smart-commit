@@ -1,5 +1,24 @@
-
 # Changelog
+
+## 0.3.10 (2025-12-03)
+
+### ✨ New Features
+
+- **PR Prerequisites Enforcement** - Require Security Review and Test Coverage to be completed before generating PR Descriptions
+  - New setting: `jiraSmartCommit.pr.requirePrerequisites` (default: `true`) to enable/disable prerequisite requirement
+  - Branch-specific tracking: Each branch maintains its own prerequisite completion status independently
+  - Automatic completion marking: Security Review and Test Coverage commands automatically mark themselves as completed when they finish successfully
+  - Persistent state: Completion status is stored in VS Code workspace state, persisting across sessions
+  - Team config support: Configure via `.jira-smart-commit.json` to enforce prerequisites across your team
+  - Clear error messages: Shows which prerequisites are missing and provides actionable guidance
+  - Workflow enforcement: Ensures quality gates (Security Review and Test Coverage) are met before creating pull requests
+
+### 🔧 Technical Details
+
+- New module: `src/pr/prPrerequisites.ts` for prerequisite tracking using VS Code workspace state (Memento)
+- Updated `getPRConfigWithTeamDefaults` to include `requirePrerequisites` with proper precedence (user settings > team config > defaults)
+- Prerequisite status stored per branch using key format: `prPrerequisites:${branchName}`
+- Graceful error handling for cases where branch name cannot be determined
 
 ## 0.3.9 (2025-12-03)
 

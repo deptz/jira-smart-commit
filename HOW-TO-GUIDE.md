@@ -219,6 +219,53 @@ To customize:
 3. Use `{{CONTEXT}}` placeholder where commit/JIRA/coverage data should be inserted
 4. Include your own sections, rules, or output format
 
+#### PR Prerequisites Enforcement
+
+The extension can enforce that Security Review and Test Coverage must be completed before generating PR Descriptions. This ensures quality gates are met before creating pull requests.
+
+**Workflow:**
+1. **Complete Security Review**: Run **`JIRA Smart Commit: Review Security`** first
+   - The extension automatically marks security as completed for your branch
+   - Works whether you use auto-submit or manual review mode
+
+2. **Complete Test Coverage**: Run **`JIRA Smart Commit: Enforce Test Coverage`** next
+   - The extension automatically marks test coverage as completed for your branch
+   - Works whether you use auto-submit or manual review mode
+
+3. **Generate PR Description**: Run **`JIRA Smart Commit: Generate PR Description`**
+   - The extension checks if both prerequisites are met
+   - If not, shows an error message listing missing prerequisites
+   - If both are met, proceeds with PR generation
+
+**Configuration:**
+
+Via VS Code Settings:
+```json
+{
+  "jiraSmartCommit.pr.requirePrerequisites": true  // Default: true
+}
+```
+
+Via Team Config (`.jira-smart-commit.json`):
+```json
+{
+  "pr": {
+    "requirePrerequisites": true
+  }
+}
+```
+
+**How It Works:**
+- **Branch-Specific Tracking**: Each branch tracks its own prerequisite completion status independently
+- **Automatic Marking**: Security Review and Test Coverage commands automatically mark themselves as completed when they finish successfully
+- **Persistent State**: Completion status is stored in VS Code workspace state, so it persists across sessions
+- **Configurable**: Can be disabled via settings or team config if your workflow doesn't require prerequisites
+
+**Troubleshooting:**
+- If prerequisites aren't being recognized, ensure you've run both Security Review and Test Coverage commands successfully
+- If you switch branches, each branch maintains its own prerequisite state
+- To reset prerequisites for a branch, you can disable the feature temporarily or clear workspace state
+
 ### Git Hooks Integration (Optional)
 Automate commit message generation with Git hooks:
 
