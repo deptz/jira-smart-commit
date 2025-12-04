@@ -265,11 +265,14 @@ function getJiraUrl(context: PRContext, key: string): string {
  * Helper: Format JIRA description with proper markdown
  */
 function formatDescription(description: string): string {
-  // Limit to first 500 characters for PR summary
-  const maxLength = 500;
+  // Limit to first 1000 characters for PR summary (tables are not truncated)
+  const maxLength = 1000;
   let text = description.trim();
   
-  if (text.length > maxLength) {
+  // Check if description contains a table - if so, don't truncate
+  const hasTable = text.includes('TABLE:') || text.includes('─'.repeat(60));
+  
+  if (!hasTable && text.length > maxLength) {
     // Try to break at sentence
     const sentences = text.substring(0, maxLength).split('. ');
     if (sentences.length > 1) {

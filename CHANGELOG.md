@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.11 (2025-12-04)
+
+### 🐛 Bug Fixes
+
+- **Enhanced JIRA Description Extraction** - Fixed table content extraction from JIRA tickets
+  - Replaced shallow 2-level ADF parser with comprehensive recursive parser that handles all Atlassian Document Format (ADF) node types
+  - Now correctly extracts content from complex table structures with nested paragraphs, lists, and formatted text
+  - Supports tables, nested bullet/ordered lists, formatted text (bold, italic, code, underline), code blocks, blockquotes, horizontal rules, and inline cards
+  - Tables are formatted with clear delimiters (TABLE:, HEADER:, ROW:) and visual separators for better readability
+  - Preserves text formatting marks as markdown equivalents (e.g., **bold**, `code`, _underline_)
+  - Increased PR description character limit from 500 to 1000 characters
+  - Tables are exempt from truncation to preserve complete acceptance criteria and specifications
+  - Fixes issue where JIRA tickets with table-based descriptions (e.g., User Story + Acceptance Criteria tables) were not extracted for commit messages, PR descriptions, and first prompt generation
+
+### 🔧 Technical Details
+
+- New functions in `src/jiraClient.ts`:
+  - `processADFNode()` - Recursive ADF tree traversal
+  - `processInlineContent()` - Inline text and marks processing
+  - `applyTextMarks()` - Convert formatting marks to markdown
+  - `processTable()` - Format tables with delimiters and separators
+- Updated `formatDescription()` in `src/pr/sectionGenerator.ts` to increase limit to 1000 chars and detect tables for truncation exemption
+
 ## 0.3.10 (2025-12-03)
 
 ### ✨ New Features

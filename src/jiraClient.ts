@@ -91,18 +91,163 @@ function parseJiraIssue(key: string, data: any, fetchRelatedIssues: boolean = fa
   return { key, summary, description, acceptance, relatedKeys, issueType };
 }
 
+/**
+ * Recursively unwrap Atlassian Document Format (ADF) to plain text
+ * Handles complex structures like tables, nested lists, and formatted text
+ */
 function unwrapDescription(desc: any): string {
   if (!desc) return '';
   if (typeof desc === 'string') return desc;
+  
   try {
-    const text = (desc.content ?? [])
-      .flatMap((b: any) => (b.content ?? []).map((n: any) => n.text))
-      .filter(Boolean)
-      .join('\\n');
-    return text || '';
-  } catch {
+    return processADFNode(desc).trim();
+  } catch (error) {
     return '';
   }
+}
+
+/**
+ * Process a single ADF node and return its text representation
+ */
+function processADFNode(node: any): string {
+  if (!node) return '';
+  
+  const type = node.type;
+  const content = node.content || [];
+  
+  switch (type) {
+    case 'doc':
+      return content.map(processADFNode).join('\n\n');
+      
+    case 'paragraph':
+      return processInlineContent(content);
+      
+    case 'heading':
+      const level = node.attrs?.level || 1;
+      const headingText = processInlineContent(content);
+      return '#'.repeat(level) + ' ' + headingText;
+      
+    case 'bulletList':
+      return content.map((item: any) => '• ' + processADFNode(item)).join('\n');
+      
+    case 'orderedList':
+      return content.map((item: any, idx: number) => `${idx + 1}. ` + processADFNode(item)).join('\n');
+      
+    case 'listItem':
+      return content.map(processADFNode).join('\n');
+      
+    case 'table':
+      return processTable(node);
+      
+    case 'tableRow':
+      return content.map(processADFNode).join(' | ');
+      
+    case 'tableHeader':
+    case 'tableCell':
+      return content.map(processADFNode).join(' ');
+      
+    case 'rule':
+      return '---';
+      
+    case 'codeBlock':
+      const code = content.map((c: any) => c.text || '').join('');
+      return '```\n' + code + '\n```';
+      
+    case 'blockquote':
+      return content.map((c: any) => '> ' + processADFNode(c)).join('\n');
+      
+    case 'inlineCard':
+      const url = node.attrs?.url || '';
+      return url ? `[Link: ${url}]` : '';
+      
+    case 'mediaSingle':
+    case 'media':
+      return '[Media attachment]';
+      
+    case 'text':
+      return applyTextMarks(node.text || '', node.marks);
+      
+    default:
+      if (content.length > 0) {
+        return content.map(processADFNode).join('');
+      }
+      return '';
+  }
+}
+
+/**
+ * Process inline content (text nodes with marks)
+ */
+function processInlineContent(content: any[]): string {
+  return content.map(processADFNode).join('');
+}
+
+/**
+ * Apply text formatting marks (bold, italic, code, etc.) as plain text indicators
+ */
+function applyTextMarks(text: string, marks?: any[]): string {
+  if (!marks || marks.length === 0) return text;
+  
+  let result = text;
+  for (const mark of marks) {
+    switch (mark.type) {
+      case 'strong':
+        result = `**${result}**`;
+        break;
+      case 'em':
+        result = `*${result}*`;
+        break;
+      case 'code':
+        result = `\`${result}\``;
+        break;
+      case 'underline':
+        result = `_${result}_`;
+        break;
+      case 'strike':
+        result = `~~${result}~~`;
+        break;
+      case 'link':
+        const href = mark.attrs?.href || '';
+        result = href ? `${result} (${href})` : result;
+        break;
+    }
+  }
+  return result;
+}
+
+/**
+ * Process table structure into readable plain text format
+ */
+function processTable(tableNode: any): string {
+  const rows = tableNode.content || [];
+  if (rows.length === 0) return '';
+  
+  const lines: string[] = [];
+  lines.push('TABLE:');
+  lines.push('─'.repeat(60));
+  
+  rows.forEach((row: any, rowIdx: number) => {
+    const cells = row.content || [];
+    const isHeader = cells.length > 0 && cells[0].type === 'tableHeader';
+    
+    const cellContents = cells.map((cell: any) => {
+      const cellContent = (cell.content || [])
+        .map(processADFNode)
+        .join(' ')
+        .trim();
+      return cellContent || '(empty)';
+    });
+    
+    if (isHeader) {
+      lines.push('HEADER: ' + cellContents.join(' | '));
+      lines.push('─'.repeat(60));
+    } else {
+      lines.push('ROW ' + rowIdx + ': ' + cellContents.join(' | '));
+    }
+  });
+  
+  lines.push('─'.repeat(60));
+  return lines.join('\n');
 }
 
 function extractAcceptance(description: string): string[] {

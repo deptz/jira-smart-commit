@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Automate your engineering workflow with JIRA context and AI. Generate high-quality Conventional Commits, structured PR Descriptions, and optimized Copilot Prompts directly from your JIRA tickets and staged changes.",
   "publisher": "triwibowo",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
