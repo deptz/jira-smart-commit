@@ -1,6 +1,15 @@
 import * as vscode from 'vscode';
 import { PRContext, PRGenerationResult, LanguageConfig } from './types';
-import { getCurrentBranch, extractJiraKeyFromBranch, getCommitLog, getFileChanges, getRepositoryRoot, clearRepositoryCache } from './gitOperations';
+import { 
+  getCurrentBranch, 
+  extractJiraKeyFromBranch, 
+  getBaseBranch,
+  getCommitLog, 
+  getFileChanges, 
+  getFileChangesSinceBase,
+  getRepositoryRoot, 
+  clearRepositoryCache 
+} from './gitOperations';
 import { detectProjectLanguage } from './languageDetector';
 import { detectCoverage } from './coverageDetector';
 import { fetchIssue } from '../jiraClient';
@@ -161,6 +170,9 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
   // Step 1: Get Git information
   const currentBranch = await getCurrentBranch();
   
+  // Step 1.5: Get base branch for comparison (with auto-detect and caching)
+  const baseBranch = await getBaseBranch(currentBranch);
+  
   // Step 2: Extract JIRA key from branch name
   const jiraKey = extractJiraKeyFromBranch(currentBranch);
   
@@ -191,11 +203,11 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
     }
   }
   
-  // Step 4: Get commit log and file changes from current branch
+  // Step 4: Get commits unique to current branch (compared to base) and file changes
   const prConfig = vscode.workspace.getConfiguration('jiraSmartCommit.pr');
   const maxCommits = prConfig.get('maxCommits', 50) as number;
-  const commits = await getCommitLog(maxCommits);
-  const fileChanges = await getFileChanges(commits);
+  const commits = await getCommitLog(baseBranch, maxCommits);
+  const fileChanges = await getFileChangesSinceBase(baseBranch);
   
   if (commits.length === 0) {
     throw new Error(
@@ -220,7 +232,7 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
   // Step 7: Build context
   const context: PRContext = {
     currentBranch,
-    baseBranch: undefined, // No base branch needed - analyzing current branch commits
+    baseBranch,  // Include base branch for proper commit filtering
     jiraKey: jiraKey || undefined,
     jiraIssue,
     commits,
@@ -328,6 +340,10 @@ export async function generatePRDescriptionWithProgress(
   // Step 1: Get Git information
   const currentBranch = await getCurrentBranch();
   
+  // Step 1.5: Get base branch for comparison
+  progress.report({ message: 'Detecting base branch...', increment: 5 });
+  const baseBranch = await getBaseBranch(currentBranch);
+  
   progress.report({ message: 'Extracting JIRA key from branch...', increment: 10 });
   
   // Step 2: Extract JIRA key
@@ -360,13 +376,13 @@ export async function generatePRDescriptionWithProgress(
     }
   }
   
-  progress.report({ message: 'Analyzing commits and changes...', increment: 15 });
+  progress.report({ message: `Analyzing commits unique to ${currentBranch}...`, increment: 15 });
   
-  // Step 4: Get commit log and file changes from current branch
+  // Step 4: Get commits unique to current branch (compared to base) and file changes
   const prConfig = vscode.workspace.getConfiguration('jiraSmartCommit.pr');
   const maxCommits = prConfig.get('maxCommits', 50) as number;
-  const commits = await getCommitLog(maxCommits);
-  const fileChanges = await getFileChanges(commits);
+  const commits = await getCommitLog(baseBranch, maxCommits);
+  const fileChanges = await getFileChangesSinceBase(baseBranch);
   
   if (commits.length === 0) {
     throw new Error(
@@ -397,7 +413,7 @@ export async function generatePRDescriptionWithProgress(
   // Build context
   const context: PRContext = {
     currentBranch,
-    baseBranch: undefined, // No base branch needed - analyzing current branch commits
+    baseBranch,  // Include base branch for proper commit filtering
     jiraKey: jiraKey || undefined,
     jiraIssue,
     commits,

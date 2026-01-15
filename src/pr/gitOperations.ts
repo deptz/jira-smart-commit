@@ -5,6 +5,8 @@ import { getGitAPI, pickRepository, RepositoryInfo } from '../utils';
 
 // Cache the selected repository for the current PR generation session
 let cachedRepository: RepositoryInfo | null = null;
+// Cache the selected base branch for the current PR generation session
+let cachedBaseBranch: string | null = null;
 
 /**
  * Get the active Git repository for PR operations
@@ -27,10 +29,18 @@ export async function getRepository(): Promise<RepositoryInfo> {
 }
 
 /**
- * Clear the cached repository (call this when starting a new PR generation)
+ * Clear the cached repository and base branch (call this when starting a new PR generation)
  */
 export function clearRepositoryCache(): void {
   cachedRepository = null;
+  cachedBaseBranch = null;
+}
+
+/**
+ * Clear only the base branch cache (useful for testing or changing target branch)
+ */
+export function clearBaseBranchCache(): void {
+  cachedBaseBranch = null;
 }
 
 /**
@@ -66,15 +76,59 @@ export function extractJiraKeyFromBranch(branchName: string): string | null {
 
 /**
  * Get base branch (target branch for PR)
- * Since Git doesn't track which branch a branch was created from,
- * we always prompt the user to select the target base branch
+ * Auto-detects common base branches or prompts user to select
+ * Result is cached for the current PR generation session
  */
 export async function getBaseBranch(currentBranch: string): Promise<string> {
-  // Always prompt user to select base branch since:
-  // 1. Git doesn't track which branch a feature branch was created from
-  // 2. HEAD.upstream is the remote tracking branch (origin/feature-branch), not the parent branch
-  // 3. Users may want to target different base branches (main, develop, staging, etc.)
-  return await promptBaseBranchSelection(currentBranch);
+  // Return cached base branch if available
+  if (cachedBaseBranch) {
+    return cachedBaseBranch;
+  }
+  
+  // Try auto-detection first
+  const autoDetected = await autoDetectBaseBranch();
+  if (autoDetected) {
+    vscode.window.showInformationMessage(
+      `Auto-detected base branch: ${autoDetected}. Comparing commits with this branch.`
+    );
+    cachedBaseBranch = autoDetected;
+    return autoDetected;
+  }
+  
+  // Fall back to prompting user
+  const selected = await promptBaseBranchSelection(currentBranch);
+  cachedBaseBranch = selected;
+  return selected;
+}
+
+/**
+ * Auto-detect common base branches in priority order
+ * Returns the first branch that exists
+ */
+async function autoDetectBaseBranch(): Promise<string | null> {
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
+  const refs = await repo.getRefs();
+  
+  // Priority order of common base branches
+  const commonBases = [
+    'origin/main',
+    'origin/master', 
+    'origin/develop',
+    'main',
+    'master',
+    'develop'
+  ];
+  
+  const availableRefs = new Set(refs.map((ref: any) => ref.name).filter(Boolean));
+  
+  for (const branch of commonBases) {
+    if (availableRefs.has(branch)) {
+      return branch;
+    }
+  }
+  
+  return null;
 }
 
 /**
@@ -144,20 +198,38 @@ async function promptBaseBranchSelection(currentBranch: string): Promise<string>
 }
 
 /**
- * Get commit log from the current branch
+ * Get commit log from the current branch compared to base branch
+ * @param baseBranch Base branch to compare against (optional, will auto-detect/prompt if not provided)
  * @param maxCommits Maximum number of commits to retrieve (default: 50)
  */
-export async function getCommitLog(maxCommits: number = 50): Promise<CommitInfo[]> {
+export async function getCommitLog(baseBranch?: string, maxCommits: number = 50): Promise<CommitInfo[]> {
   const repoInfo = await getRepository();
   const repo = repoInfo.repo;
   
   try {
-    // Get recent commits from current branch
-    const log = await repo.log({
+    // Get commits using range if baseBranch is provided
+    const logOptions: any = {
       maxEntries: maxCommits
-    });
+    };
+    
+    if (baseBranch) {
+      // Use range syntax to get commits unique to current branch
+      // This filters out commits from the base branch
+      logOptions.range = `${baseBranch}..HEAD`;
+    }
+    
+    const log = await repo.log(logOptions);
     
     if (log.length === 0) {
+      if (baseBranch) {
+        throw new Error(
+          `No commits found between ${baseBranch} and current branch. ` +
+          `This usually means:\n` +
+          `1. You're on the base branch itself\n` +
+          `2. All commits have been merged to the base branch\n` +
+          `3. The branch comparison is incorrect`
+        );
+      }
       throw new Error('No commits found on the current branch.');
     }
     
@@ -278,6 +350,67 @@ export async function getFileChanges(commits: CommitInfo[]): Promise<FileChange[
   } catch (error) {
     // If getting file changes fails completely, return empty array
     console.warn('Could not get file changes:', error);
+    return [];
+  }
+}
+
+/**
+ * Get file changes efficiently by comparing base branch to HEAD
+ * This is more efficient than analyzing each commit individually
+ * @param baseBranch Base branch to compare against
+ */
+export async function getFileChangesSinceBase(baseBranch: string): Promise<FileChange[]> {
+  const repoInfo = await getRepository();
+  const repo = repoInfo.repo;
+  
+  try {
+    // Get diff between base branch and current HEAD
+    const changes = await repo.diffBetween(baseBranch, 'HEAD');
+    
+    if (!changes || changes.length === 0) {
+      return [];
+    }
+    
+    const fileChanges: FileChange[] = changes
+      .filter((change: any) => change.uri?.fsPath)
+      .map((change: any) => {
+        let status: FileChange['status'] = 'modified';
+        let oldPath: string | undefined;
+        
+        // Map Git status to our FileChange status
+        switch (change.status) {
+          case 0: // INDEX_MODIFIED
+          case 1: // INDEX_ADDED
+          case 5: // MODIFIED
+            status = 'modified';
+            break;
+          case 2: // INDEX_DELETED
+          case 6: // DELETED
+            status = 'deleted';
+            break;
+          case 3: // INDEX_RENAMED
+            status = 'renamed';
+            oldPath = change.originalUri?.fsPath;
+            break;
+          case 7: // UNTRACKED
+            status = 'added';
+            break;
+          default:
+            status = 'modified';
+        }
+        
+        return {
+          path: change.uri!.fsPath,
+          status,
+          additions: 0,  // VS Code Git API doesn't provide these
+          deletions: 0,
+          oldPath
+        };
+      });
+    
+    return fileChanges;
+  } catch (error) {
+    console.warn('Could not get file changes since base:', error);
     return [];
   }
 }

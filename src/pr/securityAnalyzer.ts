@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { exec as cpExec } from 'child_process';
 import { promisify } from 'util';
-import { getCurrentBranch, extractJiraKeyFromBranch, getRepositoryRoot, clearRepositoryCache } from './gitOperations';
+import { getCurrentBranch, extractJiraKeyFromBranch, getRepositoryRoot, clearRepositoryCache, getBaseBranch } from './gitOperations';
 import { detectProjectLanguage } from './languageDetector';
 import { fetchIssue } from '../jiraClient';
 import { JiraIssue } from '../types';
@@ -16,41 +16,24 @@ export type SecurityContext = {
   stagedChangesDiff: string;
   frameworkContext?: string;
   currentBranch: string;
+  baseBranch?: string;
   jiraKey?: string;
   jiraIssue?: JiraIssue;
 };
 
 /**
- * Generate unified diff for all commits on the current branch
+ * Generate unified diff for commits unique to current branch (comparing against base branch)
  */
-async function getRecentCommitsDiff(cwd: string): Promise<string> {
+async function getRecentCommitsDiff(cwd: string, baseBranch: string): Promise<string> {
   try {
-    // Get current branch name
-    const { stdout: currentBranch } = await exec('git rev-parse --abbrev-ref HEAD', { cwd });
-    const branchName = currentBranch.trim();
+    // Get diff between base branch and HEAD (only changes unique to current branch)
+    const { stdout: diff } = await exec(`git diff ${baseBranch}..HEAD`, { cwd });
     
-    // Get all commits on current branch (no limit)
-    const { stdout: commits } = await exec(`git log --oneline ${branchName}`, { cwd });
-    if (!commits.trim()) {
-      return '(no commits found on current branch)';
+    if (!diff.trim()) {
+      return '(no unique changes compared to base branch)';
     }
     
-    // Get the oldest commit hash from the list
-    const commitLines = commits.trim().split('\n');
-    const oldestCommit = commitLines[commitLines.length - 1].split(' ')[0];
-    
-    // Check if this is the first commit (no parent)
-    try {
-      // Try to get parent - if it fails, this is the first commit
-      await exec(`git rev-parse --verify ${oldestCommit}^`, { cwd });
-      // Has parent - get diff from oldest commit's parent to HEAD
-      const { stdout: diff } = await exec(`git diff ${oldestCommit}^..HEAD`, { cwd });
-      return diff.trim() || '(no diff available)';
-    } catch {
-      // First commit - get diff using empty tree (shows all files as additions)
-      const { stdout: diff } = await exec(`git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 HEAD`, { cwd });
-      return diff.trim() || '(no diff available)';
-    }
+    return diff.trim();
   } catch (error) {
     console.warn('Failed to get recent commits diff:', error);
     return '(failed to generate diff for recent commits)';
@@ -111,6 +94,9 @@ function fillSecurityTemplate(template: string, context: SecurityContext): strin
   const frameworkContext = context.frameworkContext || '(not detected)';
   filled = filled.replace(/\{\{FRAMEWORK_CONTEXT\}\}/g, frameworkContext);
   
+  const baseBranch = context.baseBranch || '(not detected)';
+  filled = filled.replace(/\{\{BASE_BRANCH\}\}/g, baseBranch);
+  
   return filled;
 }
 
@@ -167,7 +153,12 @@ export async function reviewSecurityWithProgress(
   const currentBranch = await getCurrentBranch();
   const workspaceRoot = await getRepositoryRoot();
   
-  progress.report({ message: 'Extracting JIRA key from branch...', increment: 10 });
+  progress.report({ message: 'Detecting base branch...', increment: 5 });
+  
+  // Step 1.5: Get base branch for comparison (with auto-detect and caching)
+  const baseBranch = await getBaseBranch(currentBranch);
+  
+  progress.report({ message: 'Extracting JIRA key from branch...', increment: 5 });
   
   // Step 2: Extract JIRA key
   const jiraKey = extractJiraKeyFromBranch(currentBranch);
@@ -199,12 +190,12 @@ export async function reviewSecurityWithProgress(
     }
   }
   
-  progress.report({ message: 'Generating diffs for all commits on branch...', increment: 15 });
+  progress.report({ message: `Analyzing changes unique to ${currentBranch}...`, increment: 15 });
   
-  // Step 4: Get unified diff for all commits on current branch
+  // Step 4: Get unified diff for commits unique to current branch
   const { getSecurityConfigWithTeamDefaults } = await import('../aiConfigManager');
   const securityConfig = getSecurityConfigWithTeamDefaults(workspaceRoot);
-  const recentCommitsDiff = await getRecentCommitsDiff(workspaceRoot);
+  const recentCommitsDiff = await getRecentCommitsDiff(workspaceRoot, baseBranch);
   
   progress.report({ message: 'Generating diff for staged changes...', increment: 15 });
   
@@ -224,6 +215,7 @@ export async function reviewSecurityWithProgress(
     stagedChangesDiff,
     frameworkContext,
     currentBranch,
+    baseBranch,
     jiraKey: jiraKey || undefined,
     jiraIssue
   };
