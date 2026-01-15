@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.13 (2026-01-15)
+
+### 🐛 Bug Fixes
+
+- **Secret Storage Access** - Fixed "cannot access secret storage" error when setting API tokens
+  - **Root Cause**: Extension context was stored as `extensionContext` but accessed as `__extContext` in `aiKeyManager.ts`
+  - **Fixed Files**: 
+    - `aiKeyManager.ts`: Corrected global variable name from `__extContext` to `extensionContext` and added missing storage logic
+    - `firstPromptGenerator.ts`: Added proper undefined check for extension context with early return
+    - `aiPREnhancer.ts`: Now throws proper error instead of silently failing when context unavailable
+  - **Impact**: Users can now successfully set AI API keys and JIRA tokens without errors
+
+### 🔧 Technical Improvements
+
+- Added consistent error handling for extension context access across all commands
+- Improved user feedback when extension context is not yet available
+- Added missing `context.secrets.store()` call in `setApiKeyViaSettings()` function
+
+---
+
 ## 0.3.12 (2026-01-15)
 
 ### ✨ New Features

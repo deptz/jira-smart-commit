@@ -31,11 +31,11 @@ export async function setApiKeyViaSettings(): Promise<void> {
     ignoreFocusOut: true
   });
   if (!key) return;
-  const env = vscode.extensions.getExtension('vscode.git'); // touch API to ensure permissions
-  await vscode.commands.executeCommand('workbench.action.closeQuickOpen'); // UX nicety
-  const context = (global as any).__extContext as vscode.ExtensionContext | undefined;
+  const context = (global as any).extensionContext as vscode.ExtensionContext | undefined;
   if (!context) {
     vscode.window.showWarningMessage('Unable to access secret storage from here; run a Generate command first.');
     return;
   }
+  await context.secrets.store(SECRET_KEY, key);
+  vscode.window.showInformationMessage('AI API key saved securely.');
 }

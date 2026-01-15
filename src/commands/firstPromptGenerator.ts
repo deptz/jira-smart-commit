@@ -54,7 +54,12 @@ function fillTemplate(template: string, description: string, summary: string, ke
  * Main command function for First Prompt Generator
  */
 export async function firstPromptGeneratorCommand(): Promise<void> {
-  const context = (global as any).extensionContext as vscode.ExtensionContext;
+  const context = (global as any).extensionContext as vscode.ExtensionContext | undefined;
+  
+  if (!context) {
+    vscode.window.showErrorMessage('Extension context not available. Please try again.');
+    return;
+  }
   
   try {
     // Step 1: Get repository

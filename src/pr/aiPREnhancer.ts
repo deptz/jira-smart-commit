@@ -25,10 +25,10 @@ export async function enhancePRDescription(
   }
   
   // Get extension context and AI configuration
-  const extensionContext = (global as any).extensionContext;
+  const extensionContext = (global as any).extensionContext as vscode.ExtensionContext | undefined;
   if (!extensionContext) {
     console.warn('Extension context not available for AI enhancement');
-    return originalDescription;
+    throw new Error('Extension context not available. Please try again.');
   }
   
   const aiConfig = await getAIConfiguration();
