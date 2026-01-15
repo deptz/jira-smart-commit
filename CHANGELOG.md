@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.3.12 (2026-01-15)
+
+### ✨ New Features
+
+- **Base Branch Filtering** - PR Description and Security Review now analyze only commits unique to your feature branch
+  - **Auto-detection**: Automatically detects common base branches (origin/main → origin/master → origin/develop → main → master → develop)
+  - **Session Caching**: Base branch selection is cached for the session, preventing re-prompting
+  - **Smart Filtering**: Uses Git range syntax (`base..HEAD`) to filter out merged commits from base branch
+  - **User-Friendly Messages**: Shows "Auto-detected base branch: origin/main" when detection succeeds
+  - Fixes merge commit pollution issue where 33 commits were shown instead of 1 unique commit
+
+### 🔧 Technical Improvements
+
+- **gitOperations.ts Changes**:
+  - Added `cachedBaseBranch` variable for session-scoped caching
+  - Added `autoDetectBaseBranch()` helper function for common base branch detection
+  - Updated `getCommitLog()` signature from `(maxCommits)` to `(baseBranch?, maxCommits)` with range filtering support
+  - Added `getFileChangesSinceBase(baseBranch)` for efficient diff calculation using `repo.diffBetween()`
+  - Updated `clearRepositoryCache()` to clear both repository and base branch caches
+
+- **prGenerator.ts Changes**:
+  - Added base branch detection step in both `generatePRDescription()` and `generatePRDescriptionWithProgress()`
+  - Updated to pass `baseBranch` parameter to `getCommitLog()` and use `getFileChangesSinceBase()`
+  - Added progress reporting: "Detecting base branch..." and "Analyzing commits unique to {branch}..."
+  - Included `baseBranch` in PRContext for transparency
+
+- **securityAnalyzer.ts Changes**:
+  - Added `baseBranch` field to `SecurityContext` type
+  - Rewrote `getRecentCommitsDiff()` to accept `baseBranch` parameter and use `git diff ${baseBranch}..HEAD`
+  - Updated `reviewSecurityWithProgress()` to detect base branch before generating diffs
+  - Added `{{BASE_BRANCH}}` placeholder support in security review templates
+  - Updated progress messages to show branch-specific analysis
+
+### 📈 Performance Improvements
+
+- **Before**: Analyzed each commit individually, including all merged commits from base branch
+- **After**: Single `diffBetween()` call for file changes, filters commits using Git range syntax
+- **Result**: Faster generation and more accurate analysis, especially for branches with many merged commits
+
+### ⚠️ Breaking Changes
+
+- `getCommitLog()` signature changed from `getCommitLog(maxCommits: number)` to `getCommitLog(baseBranch?: string, maxCommits: number = 50)`
+- The `baseBranch` parameter is optional for backward compatibility, but recommended for accurate commit filtering
+
+### 🎯 Benefits
+
+- **Accurate Analysis**: Only analyzes commits actually made on your feature branch
+- **No Merge Commits**: Excludes commits already merged from base branch
+- **Better PR Descriptions**: Focuses on actual changes you made
+- **Better Security Reviews**: Analyzes only your unique code changes
+- **Automatic**: Works out of the box with common branch naming conventions
+
 ## 0.3.11 (2025-12-04)
 
 ### 🐛 Bug Fixes
