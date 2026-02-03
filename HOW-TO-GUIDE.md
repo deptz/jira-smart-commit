@@ -121,6 +121,10 @@ The default prompt generates comprehensive analysis:
 - **Python**: pytest, `coverage.py` or `pytest-cov`, `diff-cover`
 - **PHP**: PHPUnit, Xdebug + PHPUnit (Clover XML)
 
+#### Base Branch Detection
+
+Base branch detection for test coverage runs is handled inside the Copilot prompt itself. The extension does not select or pass a base branch for this feature.
+
 #### Configuration Options
 
 ```json
@@ -173,6 +177,9 @@ Generate comprehensive, reviewer-ready pull request descriptions using GitHub Co
    - Fetches JIRA issue details
    - Detects project language and test coverage
    - Builds comprehensive context
+   - If prompted, select the base branch before analysis begins
+   - Optional: click **Change base branch** if you want to compare against a different target
+   - Or run **JIRA Smart Commit: Change Base Branch** to change it for the current session
 
 4. **Review in Copilot Chat**:
    - Description is automatically sent to GitHub Copilot Chat
@@ -201,13 +208,20 @@ The extension uses a **Staff Engineer-grade prompt** that:
 - ✅ **Proactive risk highlighting** - Breaking changes, migrations, side effects
 - ✅ **Explicit about gaps** - Flags missing or unclear information
 
+#### Base Branch Selection
+
+Only the PR Description generator uses base-branch selection. You can:
+- Click **Change base branch** during generation, or
+- Run **JIRA Smart Commit: Change Base Branch** to set it for the current session.
+
 #### Configuration Options
 
 ```json
 {
   "jiraSmartCommit.pr.enabled": true,
   "jiraSmartCommit.pr.autoSubmit": false,  // false = paste for review, true = auto-submit
-  "jiraSmartCommit.pr.promptTemplate": "Your custom template with {{CONTEXT}} placeholder"
+  "jiraSmartCommit.pr.promptTemplate": "Your custom template with {{CONTEXT}} placeholder",
+  "jiraSmartCommit.pr.defaultBaseBranches": ["main", "master", "develop"]
 }
 ```
 

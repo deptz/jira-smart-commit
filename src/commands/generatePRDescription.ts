@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { generatePRDescriptionWithProgress } from '../pr/prGenerator';
 import { getPRConfigWithTeamDefaults } from '../aiConfigManager';
-import { getCurrentBranch, getRepositoryRoot } from '../pr/gitOperations';
+import { getBaseBranch, getCurrentBranch, getRepositoryRoot } from '../pr/gitOperations';
 import { checkPrerequisites } from '../pr/prPrerequisites';
 
 /**
@@ -63,6 +63,16 @@ export async function generatePRDescriptionCommand() {
     
     const autoSubmit = prConfig.autoSubmit;
     
+    // Preselect base branch before showing progress to avoid notification blocking the picker
+    try {
+      const currentBranch = await getCurrentBranch();
+      await getBaseBranch(currentBranch);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Failed to select base branch: ${errorMsg}`);
+      return;
+    }
+
     // Show progress while generating
     try {
       await vscode.window.withProgress(

@@ -14,6 +14,7 @@ import { generatePRDescriptionCommand } from './commands/generatePRDescription';
 import { firstPromptGeneratorCommand } from './commands/firstPromptGenerator';
 import { reviewSecurityCommand } from './commands/reviewSecurity';
 import { enforceTestCoverageCommand } from './commands/enforceTestCoverage';
+import { changeBaseBranchCommand } from './commands/changeBaseBranch';
 
 import { installPreCommitHookCommand } from './commands/hookGenerator';
 
@@ -42,6 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.firstPromptGenerator', () => withHandledErrors(firstPromptGeneratorCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.reviewSecurity', () => withHandledErrors(reviewSecurityCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.enforceTestCoverage', () => withHandledErrors(enforceTestCoverageCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.changeBaseBranch', () => withHandledErrors(changeBaseBranchCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.installHook', () => withHandledErrors(installPreCommitHookCommand()))
   );
 

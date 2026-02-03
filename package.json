@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Automate your engineering workflow with JIRA context and AI. Generate high-quality Conventional Commits, structured PR Descriptions, and optimized Copilot Prompts directly from your JIRA tickets and staged changes.",
   "publisher": "triwibowo",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -81,6 +81,11 @@
         "command": "jiraSmartCommit.enforceTestCoverage",
         "title": "JIRA Smart Commit: Enforce Test Coverage",
         "icon": "$(beaker)"
+      },
+      {
+        "command": "jiraSmartCommit.changeBaseBranch",
+        "title": "JIRA Smart Commit: Change Base Branch",
+        "icon": "$(git-branch)"
       },
       {
         "command": "jiraSmartCommit.installHook",
@@ -406,6 +411,18 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Require Security Review and Test Coverage to be completed before generating PR Description."
+        },
+        "jiraSmartCommit.pr.defaultBaseBranches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "main",
+            "master",
+            "develop"
+          ],
+          "markdownDescription": "Ordered list of preferred base branches for PR comparison. Order matters; remove unused branches (e.g. 'master') to avoid auto-detecting them."
         },
         "jiraSmartCommit.firstPrompt.autoSubmit": {
           "type": "boolean",

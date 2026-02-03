@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommitInfo, FileChange } from './types';
-import { getBranchPatterns } from './configPresets';
+import { getBranchPatterns, getDefaultBaseBranches } from './configPresets';
 import { getGitAPI, pickRepository, RepositoryInfo } from '../utils';
 
 // Cache the selected repository for the current PR generation session
@@ -41,6 +41,16 @@ export function clearRepositoryCache(): void {
  */
 export function clearBaseBranchCache(): void {
   cachedBaseBranch = null;
+}
+
+/**
+ * Prompt user to select base branch and cache it for the current session
+ */
+export async function setBaseBranchForSession(): Promise<string> {
+  const currentBranch = await getCurrentBranch();
+  const selected = await promptBaseBranchSelection(currentBranch);
+  cachedBaseBranch = selected;
+  return selected;
 }
 
 /**
@@ -88,9 +98,16 @@ export async function getBaseBranch(currentBranch: string): Promise<string> {
   // Try auto-detection first
   const autoDetected = await autoDetectBaseBranch();
   if (autoDetected) {
-    vscode.window.showInformationMessage(
-      `Auto-detected base branch: ${autoDetected}. Comparing commits with this branch.`
+    const changeAction = 'Change base branch';
+    const selection = await vscode.window.showInformationMessage(
+      `Auto-detected base branch: ${autoDetected}. Comparing commits with this branch.`,
+      changeAction
     );
+    if (selection === changeAction) {
+      const selected = await promptBaseBranchSelection(currentBranch);
+      cachedBaseBranch = selected;
+      return selected;
+    }
     cachedBaseBranch = autoDetected;
     return autoDetected;
   }
@@ -110,16 +127,13 @@ async function autoDetectBaseBranch(): Promise<string | null> {
   const repo = repoInfo.repo;
   const refs = await repo.getRefs();
   
-  // Priority order of common base branches
+  // Priority order of common base branches (configurable)
+  const defaultBases = getDefaultBaseBranches();
   const commonBases = [
-    'origin/main',
-    'origin/master', 
-    'origin/develop',
-    'main',
-    'master',
-    'develop'
+    ...defaultBases.map(branch => `origin/${branch}`),
+    ...defaultBases
   ];
-  
+
   const availableRefs = new Set(refs.map((ref: any) => ref.name).filter(Boolean));
   
   for (const branch of commonBases) {
@@ -163,7 +177,11 @@ async function promptBaseBranchSelection(currentBranch: string): Promise<string>
   
   // Remove duplicates and sort (prioritize common base branches)
   const uniqueBranches = [...new Set(branches)].filter(Boolean);
-  const commonBases = ['origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop'];
+  const defaultBases = getDefaultBaseBranches();
+  const commonBases = [
+    ...defaultBases.map(branch => `origin/${branch}`),
+    ...defaultBases
+  ];
   
   const sortedBranches = uniqueBranches.sort((a, b) => {
     const aIndex = commonBases.indexOf(a);
@@ -178,23 +196,44 @@ async function promptBaseBranchSelection(currentBranch: string): Promise<string>
     throw new Error('No other branches found to compare with. Please create or fetch other branches first.');
   }
   
-  const result = await vscode.window.showQuickPick(
-    sortedBranches.map(branch => ({
-      label: `$(git-branch) ${branch}`,
-      description: commonBases.includes(branch) ? '(common base branch)' : '',
-      branch
-    })),
-    {
-      placeHolder: `Select base branch to compare '${currentBranch}' with`,
-      title: 'Select Base Branch for PR'
-    }
-  );
-  
-  if (!result) {
-    throw new Error('Base branch selection was cancelled');
-  }
-  
-  return result.branch;
+  // Keep prompting until user selects a branch (no cancel)
+  const items = sortedBranches.map(branch => ({
+    label: `$(git-branch) ${branch}`,
+    description: commonBases.includes(branch) ? '(common base branch)' : '',
+    branch
+  }));
+
+  return await new Promise<string>((resolve) => {
+    const quickPick = vscode.window.createQuickPick<typeof items[number]>();
+    quickPick.items = items;
+    quickPick.placeholder = `Select base branch to compare '${currentBranch}' with`;
+    quickPick.title = 'Select Base Branch for PR';
+    let isDisposed = false;
+
+    const showPicker = () => {
+      if (isDisposed) return;
+      quickPick.show();
+    };
+
+    quickPick.onDidAccept(() => {
+      const selection = quickPick.selectedItems[0];
+      if (selection) {
+        resolve(selection.branch);
+        quickPick.hide();
+        isDisposed = true;
+        quickPick.dispose();
+      }
+    });
+
+    quickPick.onDidHide(() => {
+      if (!isDisposed) {
+        // Re-open if dismissed without selection
+        setTimeout(showPicker, 0);
+      }
+    });
+
+    showPicker();
+  });
 }
 
 /**

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.14 (2026-02-03)
+
+### ✨ New Features
+
+- **PR Base Branch Control** - Added optional "Change base branch" during PR Description generation and a dedicated command to change the base branch for the current session
+- **Configurable Base Branch Priority** - Added `jiraSmartCommit.pr.defaultBaseBranches` setting to control auto-detect order and remove unused branches (e.g., `master`)
+- **Persistent Base Branch Picker** - Base branch selection stays open until a branch is chosen
+
+---
+
 ## 0.3.13 (2026-01-15)
 
 ### 🐛 Bug Fixes

@@ -95,13 +95,16 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Test Coverage Analysis**: Use **`JIRA Smart Commit: Enforce Test Coverage`** to ensure ≥90% test coverage on all changed code.
 *   **Configuration**: `jiraSmartCommit.testCoverage.enabled` - Enable/disable test coverage enforcement feature.
 *   **Multi-Language Support**: Automatically detects and supports Go, Ruby, JavaScript/TypeScript, PHP, and Python.
-*   **Automatic Detection**: Infers language, test framework, coverage tools, and base branch automatically.
+*   **Automatic Detection**: Infers language, test framework, and coverage tools automatically. Base branch detection is handled inside the Copilot prompt, not by the extension.
 *   **Integration**: Uses GitHub Copilot Chat for test coverage analysis. Requires GitHub Copilot to be installed and active.
 *   **Customizable**: Configure prompt template via `jiraSmartCommit.testCoverage.promptTemplate` or team config.
 
 ### PR Description
 *   **Prerequisites Enforcement**: Require Security Review and Test Coverage to be completed before generating PR Description (default: enabled).
 *   **Configuration**: `jiraSmartCommit.pr.requirePrerequisites` - Enable/disable prerequisite requirement (default: `true`).
+*   **Base Branch Auto-Detect**: Configure the preferred base branch order with `jiraSmartCommit.pr.defaultBaseBranches` (e.g., remove `master` if unused).
+*   **Change Base Branch**: Run **`JIRA Smart Commit: Change Base Branch`** to select a different base branch for the current session.
+*   **Selection Timing**: Base branch selection happens before analysis begins to avoid blocking the progress notification.
 *   **Team Config Support**: Configure via `.jira-smart-commit.json` to enforce prerequisites across your team.
 *   **Branch-Specific Tracking**: Completion status is tracked per branch, so each branch maintains its own prerequisite state.
 *   **Workflow**: Run Security Review and Test Coverage first, then generate PR Description. The extension tracks completion automatically.
