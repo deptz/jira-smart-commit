@@ -48,6 +48,26 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 2.  GitHub Copilot automatically detects all changes (last commit + staged + unstaged).
 3.  **Result**: A comprehensive test coverage analysis and enforcement plan is generated in Copilot Chat, ensuring all changed lines and branches are covered.
 
+### 5. Orchestrate: Run Prompt Recipe (MVP)
+*Run reusable prompt recipes through a local queue backed by `.jira-smart-kanban.json`.*
+
+1. Run command: **`JIRA Smart Commit: Run Prompt Recipe`**.
+2. Pick one recipe: First Prompt, Security Review, Test Coverage, or PR Description.
+3. Choose action:
+   - **Enqueue and run**: queues and dispatches to Copilot Chat.
+   - **Preview prompt only (dry-run)**: opens rendered prompt without dispatch.
+4. **Result**: run history and card state are persisted locally for orchestration.
+
+### 6. Monitor: Open Kanban Board (MVP)
+*Manage cards and monitor runs in a local Kanban Webview UI.*
+
+1. Run command: **`JIRA Smart Commit: Open Kanban Board`**.
+2. Create cards with recipe type and optional JIRA key.
+3. Edit or delete cards directly from each card action row.
+4. Move cards across `Backlog`, `Ready`, `Doing`, `Review`, `Done`.
+5. Run or preview cards directly from the board.
+6. Track recent run status/errors in the runs table (auto-refresh while runs are active).
+
 ---
 
 ## ✨ Key Features
@@ -84,6 +104,7 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Team Gateway**: Use a centralized LLM gateway for cost tracking and consistent configuration. See [TEAM-GATEWAY-GUIDE.md](./TEAM-GATEWAY-GUIDE.md) for setup.
 *   **Usage Tracking**: Monitor team usage of commit generation, PR descriptions, and first prompts with optional metadata collection (opt-in with team gateway).
 *   **Pre-commit Hook**: Run **`JIRA Smart Commit: Install Pre-commit Hook`** to enforce commit standards locally.
+*   **Local Orchestration State**: Prompt recipe runs are persisted in `.jira-smart-kanban.json` (schema v1).
 
 ### Security Review
 *   **Security Analysis**: Use **`JIRA Smart Commit: Review Security`** to analyze all commits on your current branch for security vulnerabilities.

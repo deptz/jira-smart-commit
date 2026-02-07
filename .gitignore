@@ -57,6 +57,7 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+.jira-smart-pr-description.tmp.md
 .cache/
 tmp/
 
