@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { generatePRDescriptionWithProgress } from '../pr/prGenerator';
 import { getPRConfigWithTeamDefaults } from '../aiConfigManager';
-import { getBaseBranch, getCurrentBranch, getRepositoryRoot } from '../pr/gitOperations';
+import { extractJiraKeyFromBranch, getCurrentBranch, getRepositoryRoot } from '../pr/gitOperations';
 import { checkPrerequisites } from '../pr/prPrerequisites';
+import { buildTempPRDescriptionTemplate, writeTempPRDescriptionFile } from '../pr/tempPRFile';
 
 /**
  * Command handler for Generate PR Description
@@ -62,18 +63,25 @@ export async function generatePRDescriptionCommand() {
     }
     
     const autoSubmit = prConfig.autoSubmit;
-    
-    // Preselect base branch before showing progress to avoid notification blocking the picker
-    try {
-      const currentBranch = await getCurrentBranch();
-      await getBaseBranch(currentBranch);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`Failed to select base branch: ${errorMsg}`);
-      return;
+
+    const createAction = 'Create Bitbucket PR from temp file';
+    const currentBranch = await getCurrentBranch();
+    const jiraKey = extractJiraKeyFromBranch(currentBranch) || undefined;
+    const tempTemplate = buildTempPRDescriptionTemplate({
+      sourceBranch: currentBranch,
+      jiraKey,
+    });
+    const tempFile = writeTempPRDescriptionFile(cwd || (await getRepositoryRoot()), tempTemplate);
+    const tempDoc = await vscode.workspace.openTextDocument(vscode.Uri.file(tempFile.path));
+    await vscode.window.showTextDocument(tempDoc, { preview: false });
+
+    if (tempFile.overwritten) {
+      vscode.window.showWarningMessage(
+        `Overwrote existing temporary file: ${tempFile.path}`
+      );
     }
 
-    // Show progress while generating
+    // Show progress while generating prompt/context in Copilot
     try {
       await vscode.window.withProgress(
         {
@@ -86,8 +94,13 @@ export async function generatePRDescriptionCommand() {
         }
       );
       
-      // If we reach here, description generation succeeded but we don't use the result
-      // because the user needs to copy from Copilot Chat manually
+      const picked = await vscode.window.showInformationMessage(
+        `PR description prompt generated. Paste Copilot output into ${tempFile.path}, then create PR.`,
+        createAction
+      );
+      if (picked === createAction) {
+        await vscode.commands.executeCommand('jiraSmartCommit.createBitbucketPRFromTempFile');
+      }
     } catch (error) {
       // Check if this is the expected "please copy from Copilot" error
       const message = error instanceof Error ? error.message : String(error);
@@ -101,9 +114,10 @@ export async function generatePRDescriptionCommand() {
         vscode.window.showInformationMessage(
           `✓ PR description prompt ${mode} to Copilot Chat.\n\n` +
           `Next steps:\n` +
-          `1. Review the generated description in Copilot Chat\n` +
-          `2. Copy the response manually (${copyKey})\n` +
-          `3. Paste into your PR when ready`
+          `1. Review generated description in Copilot Chat\n` +
+          `2. Copy response manually (${copyKey})\n` +
+          `3. Paste it into ${tempFile.path}\n` +
+          `4. Run 'JIRA Smart Commit: Create Bitbucket PR from Temp File'`
         );
       } else {
         // Unexpected error

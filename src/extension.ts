@@ -15,6 +15,9 @@ import { firstPromptGeneratorCommand } from './commands/firstPromptGenerator';
 import { reviewSecurityCommand } from './commands/reviewSecurity';
 import { enforceTestCoverageCommand } from './commands/enforceTestCoverage';
 import { changeBaseBranchCommand } from './commands/changeBaseBranch';
+import { runPromptRecipeCommand } from './commands/runPromptRecipe';
+import { openKanbanViewCommand } from './ui/kanbanViewProvider';
+import { createBitbucketPRFromTempFileCommand } from './commands/createBitbucketPRFromTempFile';
 
 import { installPreCommitHookCommand } from './commands/hookGenerator';
 
@@ -44,7 +47,12 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.reviewSecurity', () => withHandledErrors(reviewSecurityCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.enforceTestCoverage', () => withHandledErrors(enforceTestCoverageCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.changeBaseBranch', () => withHandledErrors(changeBaseBranchCommand())),
-    vscode.commands.registerCommand('jiraSmartCommit.installHook', () => withHandledErrors(installPreCommitHookCommand()))
+    vscode.commands.registerCommand('jiraSmartCommit.installHook', () => withHandledErrors(installPreCommitHookCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.runPromptRecipe', () => withHandledErrors(runPromptRecipeCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.openKanban', () => withHandledErrors(openKanbanViewCommand(context))),
+    vscode.commands.registerCommand('jiraSmartCommit.createBitbucketPRFromTempFile', () =>
+      withHandledErrors(createBitbucketPRFromTempFileCommand())
+    )
   );
 
   // Listen for active text editor changes to update status bar for multi-root workspaces

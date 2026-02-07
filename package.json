@@ -90,6 +90,20 @@
       {
         "command": "jiraSmartCommit.installHook",
         "title": "JIRA Smart Commit: Install Pre-commit Hook"
+      },
+      {
+        "command": "jiraSmartCommit.runPromptRecipe",
+        "title": "JIRA Smart Commit: Run Prompt Recipe"
+      },
+      {
+        "command": "jiraSmartCommit.openKanban",
+        "title": "JIRA Smart Commit: Open Kanban Board",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "jiraSmartCommit.createBitbucketPRFromTempFile",
+        "title": "JIRA Smart Commit: Create Bitbucket PR from Temp File",
+        "icon": "$(repo-pull)"
       }
     ],
     "configuration": {
@@ -424,6 +438,45 @@
           ],
           "markdownDescription": "Ordered list of preferred base branches for PR comparison. Order matters; remove unused branches (e.g. 'master') to avoid auto-detecting them."
         },
+        "jiraSmartCommit.bitbucket.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable Bitbucket Cloud PR creation from temporary PR description file."
+        },
+        "jiraSmartCommit.bitbucket.workspace": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Bitbucket Cloud workspace slug. If empty, the extension attempts to infer from git remote."
+        },
+        "jiraSmartCommit.bitbucket.repositorySlug": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Bitbucket Cloud repository slug. If empty, the extension attempts to infer from git remote."
+        },
+        "jiraSmartCommit.bitbucket.email": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Bitbucket account email for Basic auth. Falls back to jiraSmartCommit.email."
+        },
+        "jiraSmartCommit.bitbucket.defaultTargetBranch": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional default target branch hint for pull requests."
+        },
+        "jiraSmartCommit.bitbucket.openAfterCreate": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Open created Bitbucket PR URL in browser automatically."
+        },
+        "jiraSmartCommit.bitbucket.authMode": {
+          "type": "string",
+          "enum": [
+            "jiraTokenThenAppPassword",
+            "appPasswordOnly"
+          ],
+          "default": "jiraTokenThenAppPassword",
+          "markdownDescription": "Authentication strategy: try JIRA token first then Bitbucket app password, or only app password."
+        },
         "jiraSmartCommit.firstPrompt.autoSubmit": {
           "type": "boolean",
           "default": false,
@@ -480,7 +533,7 @@
     "vscode:prepublish": "npm run build",
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "echo \"(placeholder) add tests in ./test\" && exit 0"
+    "test": "npm run build && node --test test/**/*.test.js"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
