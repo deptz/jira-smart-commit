@@ -93,6 +93,16 @@ export type TeamPRConfig = {
   requirePrerequisites?: boolean;
 };
 
+export type TeamBitbucketConfig = {
+  enabled?: boolean;
+  workspace?: string;
+  repositorySlug?: string;
+  email?: string;
+  defaultTargetBranch?: string;
+  openAfterCreate?: boolean;
+  authMode?: 'jiraTokenThenAppPassword' | 'appPasswordOnly';
+};
+
 /**
  * FirstPrompt-specific configuration that can be shared across team
  */
@@ -142,6 +152,42 @@ export function getPRConfigWithTeamDefaults(cwd?: string): {
     promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
     autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false,
     requirePrerequisites: userConfig.get<boolean>('requirePrerequisites') ?? teamConfig?.requirePrerequisites ?? true
+  };
+}
+
+export function getBitbucketConfigWithTeamDefaults(cwd?: string): {
+  enabled: boolean;
+  workspace: string;
+  repositorySlug: string;
+  email: string;
+  defaultTargetBranch: string;
+  openAfterCreate: boolean;
+  authMode: 'jiraTokenThenAppPassword' | 'appPasswordOnly';
+} {
+  const userConfig = vscode.workspace.getConfiguration('jiraSmartCommit.bitbucket');
+  const jiraConfig = vscode.workspace.getConfiguration('jiraSmartCommit');
+
+  let teamConfig: TeamBitbucketConfig | undefined;
+  if (cwd) {
+    const config = loadFullTeamConfig(cwd);
+    teamConfig = config?.bitbucket;
+  } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const config = loadFullTeamConfig(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    teamConfig = config?.bitbucket;
+  }
+
+  return {
+    enabled: userConfig.get<boolean>('enabled') ?? teamConfig?.enabled ?? true,
+    workspace: userConfig.get<string>('workspace') || teamConfig?.workspace || '',
+    repositorySlug: userConfig.get<string>('repositorySlug') || teamConfig?.repositorySlug || '',
+    email: userConfig.get<string>('email') || teamConfig?.email || (jiraConfig.get<string>('email') || ''),
+    defaultTargetBranch:
+      userConfig.get<string>('defaultTargetBranch') || teamConfig?.defaultTargetBranch || '',
+    openAfterCreate: userConfig.get<boolean>('openAfterCreate') ?? teamConfig?.openAfterCreate ?? true,
+    authMode:
+      (userConfig.get<'jiraTokenThenAppPassword' | 'appPasswordOnly'>('authMode') ||
+        teamConfig?.authMode ||
+        'jiraTokenThenAppPassword'),
   };
 }
 
