@@ -11,7 +11,7 @@ function extractJiraKeyFromBranch(branchName: string): string | undefined {
     const regex = new RegExp(cfg.branchPattern);
     const match = regex.exec(branchName);
     const key = match?.groups?.['key'] ?? match?.[1];
-    return key;
+    return key ? key.toUpperCase() : undefined;
   } catch (error) {
     return undefined;
   }

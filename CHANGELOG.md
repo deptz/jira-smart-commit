@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.15 (2026-02-13)
+
+### ✨ New Features
+
+- **PR Review Command** - Added `JIRA Smart Commit: PR Review` to generate a structured, evidence-based PR review via Copilot Chat
+- **PR Review Configuration** - New settings: `jiraSmartCommit.prReview.enabled`, `jiraSmartCommit.prReview.promptTemplate`, `jiraSmartCommit.prReview.autoSubmit`
+- **Team Config Support (PR Review)** - `prReview` section supported in `.jira-smart-commit.json` with prompt and auto-submit defaults
+
+### 🐛 Bug Fixes
+
+- **JIRA Key Normalization** - JIRA keys from branch names and manual input are now normalized to uppercase
+- **Branch Pattern Flexibility** - Default branch regex now accepts lowercase letters for JIRA key detection
+- **Secret Storage Consistency** - PR Description and Security Review now read JIRA tokens from `jiraSmartCommit.jira.apiToken`
+
+### 📚 Documentation
+
+- Added PR Review documentation to README and HOW-TO-GUIDE
+
+---
+
 ## 0.3.14 (2026-02-03)
 
 ### ✨ New Features

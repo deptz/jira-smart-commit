@@ -77,7 +77,8 @@ export function extractJiraKeyFromBranch(branchName: string): string | null {
     const match = branchName.match(pattern);
     if (match) {
       // Return first capture group or named group
-      return match[1] || match.groups?.key || null;
+      const key = match[1] || match.groups?.key;
+      return key ? key.toUpperCase() : null;
     }
   }
   

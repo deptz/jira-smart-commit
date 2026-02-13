@@ -9,23 +9,23 @@ export const CONFIG_PRESETS: Record<string, ConfigPreset> = {
   'standard': {
     name: 'Standard',
     description: 'Flexible pattern that searches anywhere in branch name',
-    branchPatterns: [/([A-Z]+-\d+)/],
+    branchPatterns: [/([A-Z]+-\d+)/i],
     baseBranches: ['main', 'master', 'develop']
   },
   'feature-based': {
     name: 'Feature-based',
     description: 'Git-flow style with feature/bugfix/hotfix prefixes',
     branchPatterns: [
-      /^feature\/([A-Z]+-\d+)/,
-      /^bugfix\/([A-Z]+-\d+)/,
-      /^hotfix\/([A-Z]+-\d+)/
+      /^feature\/([A-Z]+-\d+)/i,
+      /^bugfix\/([A-Z]+-\d+)/i,
+      /^hotfix\/([A-Z]+-\d+)/i
     ],
     baseBranches: ['develop', 'main', 'master']
   },
   'user-based': {
     name: 'User-based',
     description: 'User forks with JIRA keys (username/ABC-123-description)',
-    branchPatterns: [/^[^\/]+\/([A-Z]+-\d+)/],
+    branchPatterns: [/^[^\/]+\/([A-Z]+-\d+)/i],
     baseBranches: ['main', 'master', 'develop']
   }
 };

@@ -41,7 +41,14 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 3.  The extension analyzes all commits, file changes, and the JIRA ticket.
 4.  **Result**: A structured PR description is generated in GitHub Copilot Chat, ready to copy-paste into GitHub/GitLab/Bitbucket.
 
-### 4. Quality: Enforce Test Coverage
+### 4. Review: PR Review
+*Generate a structured PR review with findings, risks, and missing tests.*
+
+1.  Run command: **`JIRA Smart Commit: PR Review`**.
+2.  The extension analyzes branch diffs and staged changes.
+3.  **Result**: A reviewer-ready PR review is generated in GitHub Copilot Chat.
+
+### 5. Quality: Enforce Test Coverage
 *Ensure ≥90% test coverage on all changed code.*
 
 1.  Run command: **`JIRA Smart Commit: Enforce Test Coverage`**.
@@ -60,6 +67,7 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 | **💬 Copilot Integration** | Generates optimized prompts for GitHub Copilot Chat for planning, PRs, security, and test coverage. |
 | **🧪 Test Coverage Enforcement** | Ensures ≥90% test coverage on all changed code with multi-language support (Go, Ruby, JS/TS, PHP, Python). |
 | **🔒 Security Review** | Analyzes all commits for security vulnerabilities using OWASP Top 10 and additional categories. |
+| **🧭 PR Review** | Generates a structured PR review with findings, risks, and missing tests. |
 | **🏢 Team Config** | Share settings via `.jira-smart-commit.json` and enforce rules with pre-commit hooks. |
 | **🔐 Secure** | API keys are stored in **VS Code SecretStorage** (Keychain), never in plain text. |
 | **📂 Multi-Repo** | Seamlessly supports monorepos and multi-root workspaces. |
@@ -108,6 +116,12 @@ Follow the full engineering lifecycle: **Plan → Develop → Review**.
 *   **Team Config Support**: Configure via `.jira-smart-commit.json` to enforce prerequisites across your team.
 *   **Branch-Specific Tracking**: Completion status is tracked per branch, so each branch maintains its own prerequisite state.
 *   **Workflow**: Run Security Review and Test Coverage first, then generate PR Description. The extension tracks completion automatically.
+
+### PR Review
+*   **PR Review**: Use **`JIRA Smart Commit: PR Review`** to generate a structured review of branch changes.
+*   **Configuration**: `jiraSmartCommit.prReview.enabled` - Enable/disable PR review feature.
+*   **Customizable**: Configure prompt template via `jiraSmartCommit.prReview.promptTemplate` or team config.
+*   **Diff Source**: The prompt instructs Copilot to run `git diff <base>..HEAD` instead of embedding diffs.
 
 ---
 

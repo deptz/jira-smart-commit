@@ -258,6 +258,42 @@ Via VS Code Settings:
 {
   "jiraSmartCommit.pr.requirePrerequisites": true  // Default: true
 }
+
+### PR Review
+Generate a structured PR review with findings, risks, and missing tests:
+
+#### Quick Start
+
+1. Run the command: **JIRA Smart Commit: PR Review**
+2. Review the generated PR review in GitHub Copilot Chat
+3. Copy the response into your PR review or use it to refine the changes
+
+#### Configuration Options
+
+```json
+{
+  "jiraSmartCommit.prReview.enabled": true,
+  "jiraSmartCommit.prReview.autoSubmit": false,
+  "jiraSmartCommit.prReview.promptTemplate": "Your custom PR review template"
+}
+```
+
+#### Diff Collection Behavior
+
+The default PR Review prompt instructs Copilot to run `git diff <base>..HEAD` on its own.
+This avoids embedding diffs directly in the prompt.
+
+#### Team Configuration
+
+```json
+// .jira-smart-commit.json
+{
+  "prReview": {
+    "promptTemplate": "Your team's custom PR review prompt",
+    "autoSubmit": false
+  }
+}
+```
 ```
 
 Via Team Config (`.jira-smart-commit.json`):

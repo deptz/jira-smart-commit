@@ -3,7 +3,7 @@
   "displayName": "JIRA Smart Commit",
   "description": "Automate your engineering workflow with JIRA context and AI. Generate high-quality Conventional Commits, structured PR Descriptions, and optimized Copilot Prompts directly from your JIRA tickets and staged changes.",
   "publisher": "triwibowo",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -69,6 +69,11 @@
         "icon": "$(git-pull-request)"
       },
       {
+        "command": "jiraSmartCommit.prReview",
+        "title": "JIRA Smart Commit: PR Review",
+        "icon": "$(comment-discussion)"
+      },
+      {
         "command": "jiraSmartCommit.firstPromptGenerator",
         "title": "JIRA Smart Commit: First Prompt Generator"
       },
@@ -105,7 +110,7 @@
         },
         "jiraSmartCommit.branchPattern": {
           "type": "string",
-          "default": "(?:^|/)(?<key>[A-Z][A-Z0-9]+-\\d+)",
+          "default": "(?:^|/)(?<key>[A-Za-z][A-Za-z0-9]+-\\d+)",
           "markdownDescription": "Regex with `(?<key>...)` capturing the JIRA key from branch name. Supports prefixes like `feature/`, `bugfix/`, etc."
         },
         "jiraSmartCommit.enableConventionalCommits": {
@@ -423,6 +428,22 @@
             "develop"
           ],
           "markdownDescription": "Ordered list of preferred base branches for PR comparison. Order matters; remove unused branches (e.g. 'master') to avoid auto-detecting them."
+        },
+        "jiraSmartCommit.prReview.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable PR Review feature. **Requires GitHub Copilot** to be installed and active."
+        },
+        "jiraSmartCommit.prReview.promptTemplate": {
+          "type": "string",
+          "default": "You are a Staff Software Engineer performing a strict, evidence-based PR review.\n\nYour job: review the changes in this branch and identify correctness issues, risks, missing tests, and clarity gaps.\n\nMANDATORY DATA COLLECTION (AUTOMATED):\n- You MUST retrieve the unified diff for all changes on this branch compared to the base branch.\n- Use this exact command: git diff {{BASE_BRANCH}}..HEAD\n\nRules:\n- Base all statements only on the diff and context you retrieved.\n- Do not invent behavior or requirements.\n- Call out breaking changes, data migrations, and config updates.\n- Be explicit about what is missing or unclear.\n\nOutput format (return ONLY this):\n\n## Summary\n- 2-3 bullets describing the change at a high level.\n\n## Findings\n- List issues ordered by severity (Critical, High, Medium, Low).\n- Each item must reference the specific file or component it relates to.\n\n## Tests\n- Expected tests to validate the change.\n- Mention any missing or risky areas.\n\n## Questions\n- Open questions for the author.\n\n## Suggestions\n- Optional improvements or cleanup that are clearly supported by the diff.\n\n---\n\nContext:\nJIRA: {{JIRA_KEY}}\nSummary: {{JIRA_SUMMARY}}\nDescription: {{JIRA_DESCRIPTION}}\nBase Branch: {{BASE_BRANCH}}\nFramework: {{FRAMEWORK_CONTEXT}}",
+          "editPresentation": "multilineText",
+          "markdownDescription": "Template for PR review generation. Use {{FRAMEWORK_CONTEXT}}, {{BASE_BRANCH}}, {{JIRA_KEY}}, {{JIRA_SUMMARY}}, {{JIRA_DESCRIPTION}} placeholders."
+        },
+        "jiraSmartCommit.prReview.autoSubmit": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Automatically submit PR review to GitHub Copilot Chat. If false, will paste into chat for manual review."
         },
         "jiraSmartCommit.firstPrompt.autoSubmit": {
           "type": "boolean",

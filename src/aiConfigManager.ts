@@ -94,6 +94,14 @@ export type TeamPRConfig = {
 };
 
 /**
+ * PR review configuration that can be shared across team
+ */
+export type TeamPRReviewConfig = {
+  promptTemplate?: string;
+  autoSubmit?: boolean;
+};
+
+/**
  * FirstPrompt-specific configuration that can be shared across team
  */
 export type TeamFirstPromptConfig = {
@@ -142,6 +150,30 @@ export function getPRConfigWithTeamDefaults(cwd?: string): {
     promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
     autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false,
     requirePrerequisites: userConfig.get<boolean>('requirePrerequisites') ?? teamConfig?.requirePrerequisites ?? true
+  };
+}
+
+/**
+ * Get PR review configuration with team defaults
+ */
+export function getPRReviewConfigWithTeamDefaults(cwd?: string): {
+  promptTemplate: string;
+  autoSubmit: boolean;
+} {
+  const userConfig = vscode.workspace.getConfiguration('jiraSmartCommit.prReview');
+
+  let teamConfig: TeamPRReviewConfig | undefined;
+  if (cwd) {
+    const config = loadFullTeamConfig(cwd);
+    teamConfig = config?.prReview;
+  } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const config = loadFullTeamConfig(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    teamConfig = config?.prReview;
+  }
+
+  return {
+    promptTemplate: userConfig.get<string>('promptTemplate') || teamConfig?.promptTemplate || '',
+    autoSubmit: userConfig.get<boolean>('autoSubmit') ?? teamConfig?.autoSubmit ?? false
   };
 }
 

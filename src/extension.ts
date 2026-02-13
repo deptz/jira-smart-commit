@@ -11,6 +11,7 @@ import { getAiClient, callAI } from './ai';
 import { AIConfig } from './ai/aiProvider';
 import { resetApiKey, setApiKeyViaSettings } from './aiKeyManager';
 import { generatePRDescriptionCommand } from './commands/generatePRDescription';
+import { prReviewCommand } from './commands/prReview';
 import { firstPromptGeneratorCommand } from './commands/firstPromptGenerator';
 import { reviewSecurityCommand } from './commands/reviewSecurity';
 import { enforceTestCoverageCommand } from './commands/enforceTestCoverage';
@@ -40,6 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('jiraSmartCommit.setApiKey', () => withHandledErrors(setApiKeyViaSettings())),
     vscode.commands.registerCommand('jiraSmartCommit.resetJiraApiToken', () => withHandledErrors(resetJiraApiToken(context))),
     vscode.commands.registerCommand('jiraSmartCommit.generatePRDescription', () => withHandledErrors(generatePRDescriptionCommand())),
+    vscode.commands.registerCommand('jiraSmartCommit.prReview', () => withHandledErrors(prReviewCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.firstPromptGenerator', () => withHandledErrors(firstPromptGeneratorCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.reviewSecurity', () => withHandledErrors(reviewSecurityCommand())),
     vscode.commands.registerCommand('jiraSmartCommit.enforceTestCoverage', () => withHandledErrors(enforceTestCoverageCommand())),
@@ -87,7 +89,7 @@ async function detectJiraKeyFromBranch(cwd: string): Promise<string | undefined>
     const regex = new RegExp(cfg.branchPattern);
     const match = regex.exec(branch);
     const key = match?.groups?.['key'] ?? match?.[1];
-    return key;
+    return key ? key.toUpperCase() : undefined;
   } catch (error) {
     // Handle case where repository has no commits yet or other git errors
     return undefined;
@@ -98,10 +100,12 @@ async function pickOrDetectJiraKey(cwd: string): Promise<string | undefined> {
   const key = await detectJiraKeyFromBranch(cwd);
   if (key) return key;
 
-  return vscode.window.showInputBox({
+  const input = await vscode.window.showInputBox({
     title: 'Enter JIRA Issue Key (e.g., ABC-123)',
-    validateInput: (v) => (/^[A-Z][A-Z0-9]+-\d+$/.test(v) ? undefined : 'Invalid JIRA key'),
+    validateInput: (v) => (/^[A-Z][A-Z0-9]+-\d+$/i.test(v) ? undefined : 'Invalid JIRA key'),
   });
+
+  return input ? input.toUpperCase() : undefined;
 }
 
 async function getGitMessageBox(targetCwd?: string): Promise<vscode.SourceControlInputBox | undefined> {

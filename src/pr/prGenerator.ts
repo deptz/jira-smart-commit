@@ -185,7 +185,7 @@ export async function generatePRDescription(): Promise<PRGenerationResult> {
       const baseUrl = jiraConfig.get('baseUrl') as string;
       const email = jiraConfig.get('email') as string;
       const context = (global as any).extensionContext;
-      const apiToken = await context?.secrets.get('jiraApiToken');
+      const apiToken = await context?.secrets.get('jiraSmartCommit.jira.apiToken');
       const fetchRelatedIssues = jiraConfig.get('fetchRelatedIssues', false) as boolean;
       
       if (baseUrl && email && apiToken) {
@@ -359,7 +359,7 @@ export async function generatePRDescriptionWithProgress(
       const baseUrl = jiraConfig.get('baseUrl') as string;
       const email = jiraConfig.get('email') as string;
       const context = (global as any).extensionContext;
-      const apiToken = await context?.secrets.get('jiraApiToken');
+      const apiToken = await context?.secrets.get('jiraSmartCommit.jira.apiToken');
       const fetchRelatedIssues = jiraConfig.get('fetchRelatedIssues', false) as boolean;
       
       if (baseUrl && email && apiToken) {
